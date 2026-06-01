@@ -1,0 +1,16 @@
+NetFlow ISP
+-------------------------
+Invoice: {{ invoice_number }}
+
+Hi {{ customer_name }},
+
+An invoice has been generated for your account.
+
+Amount Due: {{ total_amount }}
+Due Date: {{ due_date }}
+
+Please pay by the due date to avoid service interruption. If you have questions contact support at {{ support_email }}.
+
+Thanks,
+NetFlow ISP
+Support: {{ support_email }}

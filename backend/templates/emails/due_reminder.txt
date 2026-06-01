@@ -1,0 +1,13 @@
+NetFlow ISP
+-------------------------
+Invoice: {{ invoice_number }}
+
+Hi {{ customer_name }},
+
+This is a reminder that your invoice ({{ invoice_number }}) of {{ total_amount }} is due on {{ due_date }}.
+
+Please pay by the due date to avoid service interruption. For assistance contact {{ support_email }}.
+
+Thanks,
+NetFlow ISP
+Support: {{ support_email }}

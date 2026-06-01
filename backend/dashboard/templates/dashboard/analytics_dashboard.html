@@ -1,0 +1,325 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="mb-6 flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-gray-900">Analytics & Reports</h1>
+    <div class="relative">
+        <select class="appearance-none bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg pl-4 pr-10 py-2.5 focus:outline-none focus:border-blue-500 shadow-sm cursor-pointer">
+            <option>Last 30 days</option>
+            <option>Last 6 months</option>
+            <option>Last 1 year</option>
+        </select>
+        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+            <i class="fa-solid fa-chevron-down text-xs"></i>
+        </div>
+        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-500 hidden md:block">
+            <!-- Icon is inside the dropdown text area in mockup, let's keep it simple -->
+        </div>
+    </div>
+</div>
+
+<!-- Row 1: KPI Strip -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm flex divide-x divide-gray-200 mb-6 w-full">
+    <div class="flex-1 p-5">
+        <div class="text-sm font-bold text-gray-900 mb-2">Revenue</div>
+        <div class="text-2xl font-bold text-gray-900">{{ kpi.revenue }}</div>
+    </div>
+    <div class="flex-1 p-5">
+        <div class="text-sm font-bold text-gray-900 mb-2">Customers</div>
+        <div class="text-2xl font-bold text-gray-900">{{ kpi.customers }}</div>
+    </div>
+    <div class="flex-1 p-5">
+        <div class="text-sm font-bold text-gray-900 mb-2">Complaints</div>
+        <div class="text-2xl font-bold text-gray-900">{{ kpi.complaints }}</div>
+    </div>
+    <div class="flex-1 p-5">
+        <div class="text-sm font-bold text-gray-900 mb-2">Resolution Rate</div>
+        <div class="text-2xl font-bold text-gray-900">{{ kpi.resolution_rate }}</div>
+    </div>
+    <div class="flex-1 p-5">
+        <div class="text-sm font-bold text-gray-900 mb-2">Avg Resolution Time</div>
+        <div class="text-2xl font-bold text-gray-900">{{ kpi.avg_resolution_time }}</div>
+    </div>
+</div>
+
+<!-- Row 2: Main Charts -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Revenue Trend -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Monthly Revenue Trend (PKR)</h3>
+        <div class="relative h-64 w-full">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Complaints by Category -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Complaints by Category</h3>
+        <div class="relative h-64 w-full">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Secondary Charts -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <!-- Package Distribution -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Package Distribution</h3>
+        <div class="relative h-48 w-full flex justify-center">
+            <canvas id="packageChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Complaint Areas -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Top Complaint Areas</h3>
+        <div class="relative h-48 w-full">
+            <canvas id="areasChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Network Health -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 relative overflow-hidden">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Network Health</h3>
+        <div class="relative h-48 w-full flex items-center justify-center">
+            <canvas id="healthChart"></canvas>
+            <div class="absolute bottom-6 font-bold text-2xl text-gray-900">78/100</div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 4: Monthly Report Summary -->
+<div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white">
+        <h3 class="text-lg font-bold text-gray-900">Monthly Report Summary</h3>
+        <div class="flex gap-3">
+            <form method="post" action="{% url 'dashboard:analytics_dashboard' %}">
+                {% csrf_token %}
+                <button type="submit" name="download_csv" class="bg-[#2563eb] hover:bg-blue-700 text-white font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-download"></i> Download CSV
+                </button>
+            </form>
+            <form method="post" action="{% url 'dashboard:analytics_dashboard' %}">
+                {% csrf_token %}
+                <button type="submit" name="download_pdf" class="bg-[#2563eb] hover:bg-blue-700 text-white font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-download"></i> Download PDF
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-gray-50 text-gray-900 font-bold border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-3">Month <i class="fa-solid fa-caret-down ml-1"></i></th>
+                    <th class="px-6 py-3">Revenue</th>
+                    <th class="px-6 py-3">Customers</th>
+                    <th class="px-6 py-3">Complaints</th>
+                    <th class="px-6 py-3">Resolution Rate</th>
+                    <th class="px-6 py-3">Avg Resolution Time</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 text-gray-700">April, 2021</td>
+                    <td class="px-6 py-4 text-gray-700">$11,780</td>
+                    <td class="px-6 py-4 text-gray-700">238</td>
+                    <td class="px-6 py-4 text-gray-700">15</td>
+                    <td class="px-6 py-4 text-gray-700">90.0%</td>
+                    <td class="px-6 py-4 text-gray-700">9:00</td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 text-gray-700">April, 2022</td>
+                    <td class="px-6 py-4 text-gray-700">$10,850</td>
+                    <td class="px-6 py-4 text-gray-700">293</td>
+                    <td class="px-6 py-4 text-gray-700">50</td>
+                    <td class="px-6 py-4 text-gray-700">94.5%</td>
+                    <td class="px-6 py-4 text-gray-700">12:03</td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 text-gray-700">April, 2023</td>
+                    <td class="px-6 py-4 text-gray-700">$13,980</td>
+                    <td class="px-6 py-4 text-gray-700">285</td>
+                    <td class="px-6 py-4 text-gray-700">72</td>
+                    <td class="px-6 py-4 text-gray-700">90.0%</td>
+                    <td class="px-6 py-4 text-gray-700">12:53</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Chart Initialization Scripts -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Revenue Line Chart
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Revenue',
+                    data: [500000, 350000, 700000, 600000, 850000, 600000, 1100000, 750000, 1050000, 700000, 1080000, 800000],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.4)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Complaints Stacked Bar
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(catCtx, {
+            type: 'bar',
+            data: {
+                labels: ['1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months'],
+                datasets: [
+                    { label: 'Speed', data: [25, 24, 28, 26, 30, 25], backgroundColor: '#1d4ed8' },
+                    { label: 'Outage', data: [10, 12, 10, 11, 10, 10], backgroundColor: '#dc2626' },
+                    { label: 'Router', data: [12, 10, 14, 10, 12, 11], backgroundColor: '#f59e0b' },
+                    { label: 'Billing', data: [11, 12, 10, 12, 13, 10], backgroundColor: '#0ea5e9' },
+                    { label: 'Misc', data: [8, 9, 10, 7, 6, 8], backgroundColor: '#8b5cf6' },
+                    { label: 'Installs', data: [5, 4, 6, 4, 5, 4], backgroundColor: '#84cc16' },
+                    { label: 'Other', data: [6, 5, 7, 5, 6, 5], backgroundColor: '#14b8a6' },
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { stacked: true, grid: { display: false } },
+                    y: { stacked: true, grid: { color: '#f3f4f6' } }
+                }
+            }
+        });
+
+        // Package Donut
+        const pkgCtx = document.getElementById('packageChart').getContext('2d');
+        new Chart(pkgCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['10 Mbps', '25 Mbps', '50 Mbps'],
+                datasets: [{
+                    data: [45, 30, 25],
+                    backgroundColor: ['#0284c7', '#38bdf8', '#7dd3fc'],
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { usePointStyle: true, boxWidth: 8, font: { size: 12, family: 'Inter' } }
+                    }
+                }
+            }
+        });
+
+        // Top Complaint Areas Bar
+        const areaCtx = document.getElementById('areasChart').getContext('2d');
+        new Chart(areaCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Neighborhood Hame', 'Branol Zone', 'Near Rlarad Zone', 'Neighborhood Zonrs', 'Home Ratad', 'Roolitand Ratad', 'Bintal Ratad', 'Bahvi Ratad', 'Guivars Ratad', 'Rdran Ratad'],
+                datasets: [{
+                    data: [52, 40, 32, 30, 22, 20, 18, 15, 12, 10],
+                    backgroundColor: function(context) {
+                        const index = context.dataIndex;
+                        return index < 4 ? '#ef4444' : '#3b82f6';
+                    },
+                    borderRadius: 2
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: true, grid: { color: '#f3f4f6' } },
+                    y: { display: true, grid: { display: false }, ticks: { font: { size: 10 } } }
+                }
+            }
+        });
+
+        // Network Health Gauge
+        const hlthCtx = document.getElementById('healthChart').getContext('2d');
+        new Chart(hlthCtx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [20, 20, 20, 20, 20], // 5 segments
+                    backgroundColor: ['#ef4444', '#f97316', '#facc15', '#84cc16', '#22c55e'],
+                    borderWidth: 0,
+                    needleValue: 78 // Custom property for our needle plugin
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                circumference: 180,
+                rotation: 270,
+                cutout: '75%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            },
+            plugins: [{
+                id: 'gaugeNeedle',
+                afterDatasetDraw(chart, args, options) {
+                    const { ctx, config, data, chartArea: { top, bottom, left, right, width, height } } = chart;
+                    ctx.save();
+                    
+                    const needleValue = data.datasets[0].needleValue;
+                    const dataTotal = 100;
+                    const angle = Math.PI + (1 / dataTotal * needleValue * Math.PI);
+                    const cx = width / 2;
+                    const cy = chart._metasets[0].data[0].y;
+
+                    // Needle
+                    ctx.translate(cx, cy);
+                    ctx.rotate(angle);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -5);
+                    ctx.lineTo(height - 40, 0);
+                    ctx.lineTo(0, 5);
+                    ctx.fillStyle = '#4b5563';
+                    ctx.fill();
+                    
+                    // Center circle
+                    ctx.translate(-cx, -cy);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 8, 0, 10);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }]
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Header Area -->
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-bold text-gray-900">Billing Management</h2>
+</div>
+
+<!-- KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <!-- Total Billed -->
+    <div class="bg-[#f0f9ff] rounded-xl p-5 border border-[#bae6fd] shadow-sm relative overflow-hidden">
+        <h3 class="text-sm font-bold text-gray-800 mb-1">Total Billed This Month</h3>
+        <div class="text-3xl font-bold text-[#0284c7]">PKR 4.2M</div>
+    </div>
+    
+    <!-- Collected -->
+    <div class="bg-[#f0fdf4] rounded-xl p-5 border border-[#bbf7d0] shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 mb-1">Collected</h3>
+                <div class="text-3xl font-bold text-[#16a34a]">PKR 2.8M</div>
+            </div>
+            <div class="w-6 h-6 rounded-full bg-[#16a34a] text-white flex items-center justify-center">
+                <i class="fa-solid fa-check text-xs"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending -->
+    <div class="bg-[#fffbeb] rounded-xl p-5 border border-[#fef08a] shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 mb-1">Pending</h3>
+                <div class="text-3xl font-bold text-[#d97706]">PKR 1.4M</div>
+            </div>
+            <div class="w-6 h-6 rounded-full border-2 border-[#d97706] text-[#d97706] flex items-center justify-center">
+                <i class="fa-regular fa-clock text-xs"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue -->
+    <div class="bg-[#fef2f2] rounded-xl p-5 border border-[#fecaca] shadow-sm relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <h3 class="text-sm font-bold text-gray-800 mb-1">Overdue</h3>
+                <div class="text-3xl font-bold text-[#dc2626]">PKR 380K</div>
+            </div>
+            <div class="text-[#dc2626]">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Controls Row -->
+<div class="flex justify-between items-center mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+    <div class="flex gap-6 items-center">
+        <!-- Month Filter -->
+        <div>
+            <div class="text-xs font-bold text-gray-800 mb-1">Month</div>
+            <div class="relative">
+                <select class="appearance-none bg-white border border-gray-300 text-gray-700 text-sm rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:border-blue-500 shadow-sm w-32">
+                    <option>Month</option>
+                    <option>Dec 2024</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                    <i class="fa-solid fa-chevron-down text-xs"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Filter -->
+        <div>
+            <div class="text-xs font-bold text-gray-800 mb-1">Status</div>
+            <div class="text-sm">
+                <span class="text-blue-600 font-medium cursor-pointer">All</span> <span class="text-gray-400">/</span>
+                <span class="text-gray-600 hover:text-gray-900 cursor-pointer">Paid</span> <span class="text-gray-400">/</span>
+                <span class="text-gray-600 hover:text-gray-900 cursor-pointer">Unpaid</span> <span class="text-gray-400">/</span>
+                <span class="text-gray-600 hover:text-gray-900 cursor-pointer">Overdue</span>
+            </div>
+        </div>
+        
+        <!-- Search -->
+        <div class="ml-4">
+            <input type="text" placeholder="Search by name" class="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg px-3 py-2 w-64 focus:outline-none focus:border-blue-500 shadow-sm">
+        </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+        <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm rounded-lg px-4 py-2 shadow-sm flex items-center gap-2 transition-colors">
+            <i class="fa-regular fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="bg-[#2563eb] hover:bg-blue-700 text-white font-medium text-sm rounded-lg px-5 py-2 shadow-sm transition-colors">
+            Generate Bills
+        </button>
+    </div>
+</div>
+
+<!-- Main Content Layout (Table + Side Panel) -->
+<div class="flex gap-6">
+    
+    <!-- Table Section -->
+    <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden self-start">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900">Bills</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-gray-50 text-gray-900 font-bold border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3">Invoice #</th>
+                        <th class="px-6 py-3">Customer</th>
+                        <th class="px-6 py-3">Package</th>
+                        <th class="px-6 py-3">Bill Month</th>
+                        <th class="px-6 py-3">Amount</th>
+                        <th class="px-6 py-3">Due Date</th>
+                        <th class="px-6 py-3">Status</th>
+                        <th class="px-6 py-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for b in bills %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-700">{{ b.invoice_number }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ b.customer.user.get_full_name }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ b.package.name|default:"25 Mbps" }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ b.bill_month|date:"M Y" }}</td>
+                        <td class="px-6 py-4 text-gray-700">PKR {{ b.total_amount }}</td>
+                        <td class="px-6 py-4 text-gray-700">{{ b.due_date|date:"d M" }}</td>
+                        <td class="px-6 py-4">
+                            {% if b.status == 'paid' %}
+                            <span class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full text-xs font-semibold">Paid</span>
+                            {% elif b.status == 'overdue' %}
+                            <span class="bg-[#fee2e2] text-[#991b1b] px-3 py-1 rounded-full text-xs font-semibold">Overdue</span>
+                            {% else %}
+                            <span class="bg-[#fee2e2] text-[#991b1b] px-3 py-1 rounded-full text-xs font-semibold">Unpaid</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if b.status == 'overdue' %}
+                            <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-md px-3 py-1.5 shadow-sm transition-colors">
+                                View + Send Reminder
+                            </button>
+                            {% else %}
+                            <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-md px-3 py-1.5 shadow-sm transition-colors">
+                                View
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <!-- Exact UI Match Mock Data if DB is empty -->
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-700">INV-2024-001</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">Muhammad Ali</td>
+                        <td class="px-6 py-4 text-gray-700">25 Mbps</td>
+                        <td class="px-6 py-4 text-gray-700">Dec 2024</td>
+                        <td class="px-6 py-4 text-gray-700">PKR 2,200</td>
+                        <td class="px-6 py-4 text-gray-700">10 Jan</td>
+                        <td class="px-6 py-4"><span class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full text-xs font-semibold">Paid</span></td>
+                        <td class="px-6 py-4"><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-md px-3 py-1.5 shadow-sm transition-colors">View</button></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-700">INV-2024-002</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">Sara Khan</td>
+                        <td class="px-6 py-4 text-gray-700">10 Mbps</td>
+                        <td class="px-6 py-4 text-gray-700">Dec 2024</td>
+                        <td class="px-6 py-4 text-gray-700">PKR 1,200</td>
+                        <td class="px-6 py-4 text-gray-700">10 Jan</td>
+                        <td class="px-6 py-4"><span class="bg-[#fee2e2] text-[#991b1b] px-3 py-1 rounded-full text-xs font-semibold">Overdue</span></td>
+                        <td class="px-6 py-4"><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-md px-3 py-1.5 shadow-sm transition-colors">View + Send Reminder</button></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-700">INV-2024-003</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">Muhammad Ali</td>
+                        <td class="px-6 py-4 text-gray-700">25 Mbps</td>
+                        <td class="px-6 py-4 text-gray-700">Dec 2024</td>
+                        <td class="px-6 py-4 text-gray-700">PKR 2,200</td>
+                        <td class="px-6 py-4 text-gray-700">10 Jan</td>
+                        <td class="px-6 py-4"><span class="bg-[#dcfce7] text-[#166534] px-3 py-1 rounded-full text-xs font-semibold">Paid</span></td>
+                        <td class="px-6 py-4"><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-md px-3 py-1.5 shadow-sm transition-colors">View</button></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 text-gray-700">INV-2024-004</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">Sara Khan</td>
+                        <td class="px-6 py-4 text-gray-700">10 Mbps</td>
+                        <td class="px-6 py-4 text-gray-700">Dec 2024</td>
+                        <td class="px-6 py-4 text-gray-700">PKR 1,200</td>
+                        <td class="px-6 py-4 text-gray-700">10 Jan</td>
+                        <td class="px-6 py-4"><span class="bg-[#fee2e2] text-[#991b1b] px-3 py-1 rounded-full text-xs font-semibold">Unpaid</span></td>
+                        <td class="px-6 py-4"><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-medium rounded-md px-3 py-1.5 shadow-sm transition-colors">View</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Side Panel: Invoice Preview -->
+    <div class="w-[380px] shrink-0 self-start sticky top-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Invoice Preview</h3>
+        
+        <!-- Preview Cards Container -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4 relative overflow-hidden">
+            <!-- Simulated Invoice Paper -->
+            <div class="border border-gray-200 rounded-lg p-5 bg-white relative">
+                <!-- PAID Stamp -->
+                <div class="absolute inset-0 flex items-center justify-center opacity-70 pointer-events-none transform -rotate-12">
+                    <div class="border-4 border-green-600 text-green-600 text-4xl font-black tracking-widest px-4 py-1 rounded-lg">
+                        PAID
+                    </div>
+                </div>
+
+                <!-- Invoice Header -->
+                <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-900">
+                        <span class="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-orange-400 flex items-center justify-center text-white text-xs">N</span>
+                        NetFlow<br><span class="text-xs text-gray-500 block leading-none">ISP Manager</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs font-bold text-gray-900">Invoice #</div>
+                        <div class="text-[10px] text-gray-500">Dec 10, 2024</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-end mb-6 text-sm">
+                    <div class="font-bold text-gray-900">INV-2024-001</div>
+                    <div class="font-bold text-gray-900">PKR 2,200</div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="text-[10px] font-bold text-gray-900 uppercase">Customer</div>
+                    <div class="text-xs font-medium text-gray-900">Sara Khan</div>
+                    <div class="text-[10px] text-gray-500">Address, ISP Address</div>
+                </div>
+
+                <!-- Invoice Table -->
+                <table class="w-full text-left text-[10px]">
+                    <thead class="bg-gray-100 font-bold text-gray-700">
+                        <tr>
+                            <th class="py-2 px-2">Item</th>
+                            <th class="py-2 px-2 text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-600">
+                        <tr>
+                            <td class="py-2 px-2">Monthly charge</td>
+                            <td class="py-2 px-2 text-right">PKR 2,200</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-2">Tax (0%)</td>
+                            <td class="py-2 px-2 text-right">PKR 0</td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="border-t border-gray-200 font-bold text-gray-900 bg-gray-50">
+                        <tr>
+                            <td class="py-2 px-2">Total</td>
+                            <td class="py-2 px-2 text-right">PKR 2,200</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="border border-gray-200 rounded-lg p-5 bg-white relative mt-4 opacity-50 scale-95 origin-top">
+                 <!-- UNPAID Stamp -->
+                 <div class="absolute inset-0 flex items-center justify-center opacity-70 pointer-events-none transform -rotate-12">
+                    <div class="border-4 border-red-600 text-red-600 text-4xl font-black tracking-widest px-4 py-1 rounded-lg">
+                        UNPAID
+                    </div>
+                </div>
+                 <!-- Invoice Header -->
+                 <div class="flex justify-between items-start mb-6">
+                    <div class="flex items-center gap-2 text-xl font-bold text-gray-900">
+                        <span class="w-6 h-6 rounded bg-gradient-to-br from-blue-500 to-orange-400 flex items-center justify-center text-white text-xs">N</span>
+                        NetFlow
+                    </div>
+                </div>
+                <div class="text-[10px] font-bold text-gray-900 uppercase">Customer</div>
+                <div class="text-xs font-medium text-gray-900">Sara Khan</div>
+                <!-- Cutoff preview -->
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-col gap-3">
+            <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm rounded-lg px-4 py-2.5 shadow-sm flex items-center justify-center gap-2 transition-colors">
+                <i class="fa-solid fa-download"></i> Download PDF
+            </button>
+            <button class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium text-sm rounded-lg px-4 py-2.5 shadow-sm flex items-center justify-center gap-2 transition-colors">
+                <i class="fa-brands fa-whatsapp text-green-500 text-lg"></i> Send via WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

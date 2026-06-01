@@ -1,0 +1,28 @@
+{% extends 'base_admin.html' %}
+{% block content %}
+<div class="card p-4">
+    <h2 class="h4 mb-4">Technicians</h2>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Current Jobs</th>
+                    <th>Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in technicians %}
+                <tr>
+                    <td>{{ t.user.get_full_name }}</td>
+                    <td><span class="badge badge-{{ t.status }}">{{ t.get_status_display }}</span></td>
+                    <td>{{ t.current_jobs_count }}</td>
+                    <td>{{ t.customer_rating }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

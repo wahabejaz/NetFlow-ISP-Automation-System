@@ -1,0 +1,204 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Main container to center the form -->
+<div class="flex flex-col items-center justify-center py-10 w-full">
+
+    <!-- Stepper Top -->
+    <div class="flex items-center justify-between w-full max-w-2xl mb-8 relative">
+        <!-- Connecting Line behind steps -->
+        <div class="absolute top-[28px] left-0 w-full h-[2px] bg-gray-200 -z-10"></div>
+        <div class="absolute top-[28px] left-0 w-[25%] h-[2px] bg-[#009688] -z-10"></div>
+
+        <!-- Step 1 -->
+        <div class="flex flex-col items-center">
+            <div class="text-sm {% if draft.step >= 1 %}text-[#009688] font-bold{% else %}text-gray-500 font-medium{% endif %} mb-2">Step 1:<br>Personal Info</div>
+            <div class="w-4 h-4 rounded-full border-2 bg-white {% if draft.step >= 1 %}border-[#009688]{% else %}border-gray-300{% endif %}"></div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="flex flex-col items-center">
+            <div class="text-sm {% if draft.step >= 2 %}text-[#009688] font-bold{% else %}text-gray-500 font-medium{% endif %} mb-2">Step 2:<br>Address</div>
+            <div class="w-4 h-4 rounded-full border-2 bg-white {% if draft.step >= 2 %}border-[#009688]{% else %}border-gray-300{% endif %}"></div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="flex flex-col items-center">
+            <div class="text-sm {% if draft.step >= 3 %}text-[#009688] font-bold{% else %}text-gray-500 font-medium{% endif %} mb-2">Step 3:<br>Package</div>
+            <div class="w-4 h-4 rounded-full border-2 bg-white {% if draft.step >= 3 %}border-[#009688]{% else %}border-gray-300{% endif %}"></div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="flex flex-col items-center">
+            <div class="text-sm {% if draft.step >= 4 %}text-[#009688] font-bold{% else %}text-gray-500 font-medium{% endif %} mb-2">Step 4:<br>Confirm</div>
+            <div class="w-4 h-4 rounded-full border-2 bg-white {% if draft.step >= 4 %}border-[#009688]{% else %}border-gray-300{% endif %}"></div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+        <form method="post" action="{% url 'customers:onboard' %}">
+            {% csrf_token %}
+            
+            <div class="p-8">
+                <!-- Header -->
+                <h2 class="text-2xl font-bold text-gray-900 mb-8">
+                    Add New Customer — Step {{ draft.step }} of 4: 
+                    {% if draft.step == 1 %}Personal Info{% elif draft.step == 2 %}Address{% elif draft.step == 3 %}Package{% else %}Confirm{% endif %}
+                </h2>
+
+                {% if draft.step == 1 %}
+                <!-- Grid Layout for Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                    
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Full Name</label>
+                        <input type="text" name="full_name" value="{{ draft.data.full_name|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors" required>
+                    </div>
+
+                    <!-- Father Name -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Father Name</label>
+                        <input type="text" name="father_name" value="{{ draft.data.father_name|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors" required>
+                    </div>
+
+                    <!-- CNIC -->
+                    <div class="relative group">
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">CNIC</label>
+                        <input type="text" name="cnic" placeholder="XXXXX-XXXXXXX-X" value="{{ draft.data.cnic|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors placeholder-gray-400" required>
+                        
+                        <!-- Tooltip matching mockup -->
+                        <div class="absolute -top-10 right-0 bg-white border border-gray-200 shadow-sm text-xs px-3 py-2 rounded-lg text-gray-600 hidden group-hover:block z-10 whitespace-nowrap">
+                            Auto-formatting dashes: <br>XXXXX-XXXXXXX-X
+                            <!-- Tooltip Arrow -->
+                            <div class="absolute bottom-[-5px] right-[20px] w-2 h-2 bg-white border-b border-r border-gray-200 transform rotate-45"></div>
+                        </div>
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Phone Number</label>
+                        <div class="flex items-center w-full bg-[#f8fafc] border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#009688] transition-colors">
+                            <div class="flex items-center px-3 py-2.5 bg-white border-r border-gray-200 text-sm cursor-pointer">
+                                &#127477;&#127472; +92 <i class="fa-solid fa-caret-down ml-2 text-gray-400"></i>
+                            </div>
+                            <input type="text" name="phone" value="{{ draft.data.phone|default:'' }}" class="flex-1 bg-transparent px-3 py-2.5 outline-none" required>
+                        </div>
+                    </div>
+
+                    <!-- Email Address -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-sm font-semibold text-gray-800">Email Address</label>
+                            <span class="text-xs text-gray-400">(Optional)</span>
+                        </div>
+                        <input type="email" name="email" value="{{ draft.data.email|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors">
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Date of Birth</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                                <i class="fa-regular fa-calendar"></i>
+                            </div>
+                            <input type="date" name="dob" value="{{ draft.data.dob|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg pl-10 pr-3 py-2.5 outline-none focus:border-[#009688] transition-colors text-gray-700">
+                        </div>
+                    </div>
+
+                    <!-- Gender -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Gender</label>
+                        <div class="flex gap-4">
+                            <label class="flex-1 flex items-center gap-2 p-2.5 border border-gray-200 rounded-lg cursor-pointer bg-[#f8fafc] hover:bg-gray-50 transition-colors">
+                                <input type="radio" name="gender" value="male" class="w-4 h-4 text-[#009688] focus:ring-[#009688]" {% if draft.data.gender == 'male' %}checked{% endif %}>
+                                <span class="text-sm text-gray-700">Male</span>
+                            </label>
+                            <label class="flex-1 flex items-center gap-2 p-2.5 border border-gray-200 rounded-lg cursor-pointer bg-[#f8fafc] hover:bg-gray-50 transition-colors">
+                                <input type="radio" name="gender" value="female" class="w-4 h-4 text-[#009688] focus:ring-[#009688]" {% if draft.data.gender == 'female' %}checked{% endif %}>
+                                <span class="text-sm text-gray-700">Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Profile Photo Upload -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Profile Photo Upload</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-xl bg-[#f8fafc] flex flex-col items-center justify-center py-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                            <i class="fa-solid fa-camera text-gray-400 text-xl mb-2"></i>
+                            <span class="text-sm text-gray-600 font-medium">Click or drag to upload photo</span>
+                        </div>
+                    </div>
+                </div>
+                {% elif draft.step == 2 %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Address</label>
+                        <input type="text" name="address" value="{{ draft.data.address|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">Area</label>
+                        <input type="text" name="area" value="{{ draft.data.area|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-800 mb-1.5">City</label>
+                        <input type="text" name="city" value="{{ draft.data.city|default:'' }}" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688] transition-colors" required>
+                    </div>
+                </div>
+                {% elif draft.step == 3 %}
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Select Package</label>
+                    <select name="package" class="w-full bg-[#f8fafc] border border-gray-200 rounded-lg px-3 py-2.5 outline-none focus:border-[#009688]">
+                        <option value="">Select a package</option>
+                        <option value="1" {% if draft.data.package == '1' %}selected{% endif %}>25 Mbps - PKR 2,000</option>
+                        <option value="2" {% if draft.data.package == '2' %}selected{% endif %}>50 Mbps - PKR 3,500</option>
+                    </select>
+                </div>
+                {% else %}
+                <div class="text-center py-10">
+                    <i class="fa-solid fa-circle-check text-5xl text-green-500 mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Ready to submit</h3>
+                    <p class="text-gray-500">Please review the details and click continue to create the customer.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Footer -->
+            <div class="px-8 py-5 border-t border-gray-100 flex items-center justify-between">
+                <div>
+                    {% if draft.step > 1 %}
+                    <button type="submit" name="prev" class="text-gray-500 hover:text-gray-700 font-medium text-sm px-4 py-2">
+                        Back
+                    </button>
+                    {% else %}
+                    <a href="{% url 'customers:list' %}" class="text-gray-500 hover:text-gray-700 font-medium text-sm px-4 py-2">
+                        Cancel
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" name="save_draft" class="bg-white border border-[#1e40af] text-[#1e40af] hover:bg-blue-50 font-medium text-sm rounded-lg px-6 py-2.5 transition-colors">
+                        Save Draft
+                    </button>
+                    <button type="submit" name="next" class="bg-[#1e40af] hover:bg-blue-800 text-white font-medium text-sm rounded-lg px-6 py-2.5 flex items-center gap-2 transition-colors">
+                        Continue <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Pagination Dots -->
+    <div class="flex justify-center gap-2 mt-8">
+        <div class="w-2.5 h-2.5 rounded-full {% if draft.step == 1 %}bg-[#009688]{% else %}bg-gray-300{% endif %}"></div>
+        <div class="w-2.5 h-2.5 rounded-full {% if draft.step == 2 %}bg-[#009688]{% else %}bg-gray-300{% endif %}"></div>
+        <div class="w-2.5 h-2.5 rounded-full {% if draft.step == 3 %}bg-[#009688]{% else %}bg-gray-300{% endif %}"></div>
+        <div class="w-2.5 h-2.5 rounded-full {% if draft.step == 4 %}bg-[#009688]{% else %}bg-gray-300{% endif %}"></div>
+    </div>
+
+</div>
+
+{% endblock %}

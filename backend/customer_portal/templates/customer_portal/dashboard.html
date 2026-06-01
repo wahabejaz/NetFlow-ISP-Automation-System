@@ -1,0 +1,30 @@
+{% extends 'base_portal.html' %}
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h3 class="h5">My Package</h3>
+            {% if customer.package %}
+                <div class="fs-1 fw-bold text-primary">{{ customer.package.speed_mbps }} Mbps</div>
+                <div class="text-muted">{{ customer.package.name }} Plan</div>
+            {% else %}
+                <p>No active package.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h3 class="h5">Recent Bills</h3>
+            {% if bills %}
+                <ul>
+                {% for b in bills|slice:":3" %}
+                    <li>{{ b.bill_month|date:"M Y" }} - PKR {{ b.total_amount }} ({{ b.get_status_display }})</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No recent bills.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

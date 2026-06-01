@@ -1,0 +1,121 @@
+{% extends 'base_public.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-[#061121] flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Abstract background lines -->
+    <div class="absolute inset-0 z-0 opacity-10 pointer-events-none" style="background-image: linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px); background-size: 50px 50px; transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);"></div>
+    
+    <!-- Main Container -->
+    <div class="w-full max-w-[900px] bg-white rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden z-10 min-h-[500px]">
+        
+        <!-- Left Panel: Branding & Image -->
+        <div class="md:w-1/2 bg-[#061121] relative p-10 flex flex-col justify-center">
+            <!-- We load the exact image from the schema as requested -->
+            <div class="absolute inset-0 z-0 bg-cover bg-center" style="background-image: url('{% static 'img/login-bg.png' %}');"></div>
+            <!-- Gentle gradient overlay to ensure the logo and text are readable against the bright city lights -->
+            <div class="absolute inset-0 bg-gradient-to-br from-[#061121]/70 to-transparent z-0"></div>
+            
+            <div class="relative z-10 mb-12">
+                <div class="flex items-center gap-2 text-white font-bold text-2xl tracking-tight">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-8 h-8"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>
+                    NetFlow
+                </div>
+            </div>
+            
+            <div class="relative z-10">
+                <h1 class="text-white text-[28px] font-semibold leading-tight tracking-tight">
+                    Smart Internet.<br>
+                    Automated Management.
+                </h1>
+            </div>
+        </div>
+
+        <!-- Right Panel: Login Form -->
+        <div class="md:w-1/2 bg-white flex flex-col relative">
+            
+            <div class="flex-1 px-10 py-8 flex flex-col">
+                <!-- Role Switcher -->
+                <div class="bg-gray-100 rounded-full p-1 flex justify-between items-center mb-10 w-full shadow-sm border border-gray-200">
+                    <a href="?role=customer" class="flex-1 text-center py-2 text-sm font-medium rounded-full transition-colors {% if active_role == 'customer' or not active_role %}bg-blue-500 text-white shadow-md{% else %}text-gray-500 hover:text-gray-900{% endif %}">Customer</a>
+                    <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                    <a href="?role=admin" class="flex-1 text-center py-2 text-sm font-medium rounded-full transition-colors {% if active_role == 'admin' %}bg-blue-500 text-white shadow-md{% else %}text-gray-500 hover:text-gray-900{% endif %}">Admin</a>
+                    <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                    <a href="?role=technician" class="flex-1 text-center py-2 text-sm font-medium rounded-full transition-colors {% if active_role == 'technician' %}bg-blue-500 text-white shadow-md{% else %}text-gray-500 hover:text-gray-900{% endif %}">Technician</a>
+                </div>
+
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Welcome Back</h2>
+
+                {% if form.non_field_errors %}
+                    <div class="bg-red-50 text-red-600 text-sm p-3 rounded-lg border border-red-200 mb-4">
+                        {{ form.non_field_errors.0 }}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="flex flex-col gap-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="role" value="{{ active_role|default:'customer' }}">
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-regular fa-envelope"></i>
+                        </div>
+                        <input type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}" placeholder="Enter your email" required value="{{ form.email.value|default:'' }}" class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                    </div>
+                    
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <input type="password" name="{{ form.password.html_name }}" id="{{ form.password.id_for_label }}" placeholder="Enter your password" required class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer text-gray-400 hover:text-gray-600" onclick="togglePwd()">
+                            <i class="fa-regular fa-eye-slash toggle-password"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center mt-1">
+                        <input type="checkbox" name="{{ form.remember_me.html_name }}" id="{{ form.remember_me.id_for_label }}" class="h-4 w-4 text-blue-500 focus:ring-blue-500 border-gray-300 rounded cursor-pointer">
+                        <label for="{{ form.remember_me.id_for_label }}" class="ml-2 block text-sm text-gray-700 cursor-pointer">
+                            Remember me
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-[#1877f2] hover:bg-blue-600 text-white font-medium py-3 rounded-full mt-2 transition-colors shadow-sm">
+                        Sign In
+                    </button>
+                    
+                    <a href="#" class="text-center text-sm font-medium text-[#1877f2] hover:text-blue-700 mt-3 transition-colors">
+                        Forgot Password?
+                    </a>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 py-4 px-6 text-center border-t border-gray-100 mt-auto">
+                <span class="text-xs text-gray-500 font-medium">Powered by NetFlow ISP Automation Suite</span>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePwd() {
+        const input = document.getElementById('{{ form.password.id_for_label }}');
+        const icon = document.querySelector('.toggle-password');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+</script>
+{% endblock %}

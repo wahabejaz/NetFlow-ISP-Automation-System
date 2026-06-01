@@ -1,0 +1,144 @@
+{% extends 'base_portal.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Main Chat Interface Container -->
+<div class="flex h-[calc(100vh-120px)] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden font-sans">
+    
+    <!-- Left Sidebar: Quick Help Topics -->
+    <div class="w-64 bg-gray-50 border-r border-gray-200 flex flex-col shrink-0">
+        <div class="p-5 bg-[#148282] text-white flex items-center gap-2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="w-6 h-6"><path d="M4 22h14a2 2 0 002-2V7.5L14.5 2H6a2 2 0 00-2 2v4"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M2 15h10"></path><path d="M9 18l3-3-3-3"></path></svg>
+            <span class="font-bold text-lg">NetFlow</span>
+        </div>
+        
+        <div class="p-5 flex-1 overflow-y-auto">
+            <h3 class="font-bold text-gray-900 mb-4">Quick Help Topics</h3>
+            
+            <div class="space-y-3 flex flex-col items-start">
+                <button class="bg-[#e0f2f1] text-[#0f766e] border border-[#ccfbf1] font-medium text-sm px-4 py-2 rounded-full hover:bg-[#ccfbf1] transition-colors whitespace-nowrap shadow-sm" onclick="sendQuickMessage('Check my bill')">Check my bill</button>
+                <button class="bg-[#e0f2f1] text-[#0f766e] border border-[#ccfbf1] font-medium text-sm px-4 py-2 rounded-full hover:bg-[#ccfbf1] transition-colors whitespace-nowrap shadow-sm" onclick="sendQuickMessage('Report slow internet')">Report slow internet</button>
+                <button class="bg-[#e0f2f1] text-[#0f766e] border border-[#ccfbf1] font-medium text-sm px-4 py-2 rounded-full hover:bg-[#ccfbf1] transition-colors whitespace-nowrap shadow-sm" onclick="sendQuickMessage('How to restart router')">How to restart router</button>
+                <button class="bg-[#e0f2f1] text-[#0f766e] border border-[#ccfbf1] font-medium text-sm px-4 py-2 rounded-full hover:bg-[#ccfbf1] transition-colors whitespace-nowrap shadow-sm" onclick="sendQuickMessage('Upgrade my package')">Upgrade my package</button>
+                <button class="bg-[#e0f2f1] text-[#0f766e] border border-[#ccfbf1] font-medium text-sm px-4 py-2 rounded-full hover:bg-[#ccfbf1] transition-colors whitespace-nowrap shadow-sm" onclick="sendQuickMessage('Talk to a human agent')">Talk to a human agent</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Area: Chat Window -->
+    <div class="flex-1 flex flex-col bg-white">
+        
+        <!-- Chat Header -->
+        <div class="h-16 bg-[#e2e8f0] px-6 flex justify-between items-center border-b border-gray-300">
+            <div class="flex items-center gap-3">
+                <h2 class="font-bold text-gray-900 text-lg">NetFlow AI Support</h2>
+                <div class="flex items-center gap-1.5 text-sm font-bold text-[#16a34a]">
+                    <div class="w-2.5 h-2.5 rounded-full bg-[#16a34a]"></div> Online
+                </div>
+            </div>
+            <button class="text-gray-500 hover:text-gray-900">
+                <i class="fa-solid fa-minus"></i>
+            </button>
+        </div>
+
+        <!-- Chat History -->
+        <div id="chatbox" class="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+            
+            <!-- AI Initial Message -->
+            <div class="flex items-start gap-3">
+                <div class="w-8 h-8 rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm mt-1">NF</div>
+                <div class="bg-[#1e40af] text-white px-5 py-3 rounded-2xl rounded-tl-sm shadow-sm max-w-[80%] text-sm leading-relaxed">
+                    Hello {{ request.user.first_name|default:"there" }}! I'm your NetFlow AI assistant 👋 How can I help you today?
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Chat Input -->
+        <div class="p-4 bg-white border-t border-gray-200">
+            <form id="chatForm" class="relative flex items-center">
+                {% csrf_token %}
+                <input type="text" id="messageInput" class="w-full border-2 border-gray-300 rounded-lg pl-4 pr-12 py-3 text-sm text-gray-800 focus:outline-none focus:border-[#1e40af] transition-colors" placeholder="Type your message..." required autocomplete="off">
+                <button type="submit" class="absolute right-3 text-[#1e40af] hover:text-blue-800 p-2">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 transform rotate-45"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendQuickMessage(text) {
+    const input = document.getElementById('messageInput');
+    input.value = text;
+    document.getElementById('chatForm').dispatchEvent(new Event('submit'));
+}
+
+document.getElementById('chatForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = e.submitter || this.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    
+    const input = document.getElementById('messageInput');
+    const msg = input.value.trim();
+    if(!msg) return;
+    input.value = '';
+    
+    const chatbox = document.getElementById('chatbox');
+    
+    // Append User Message
+    chatbox.innerHTML += `
+    <div class="flex items-start gap-3 justify-end">
+        <div class="bg-[#e5e7eb] text-gray-800 px-5 py-3 rounded-2xl rounded-tr-sm shadow-sm max-w-[80%] text-sm leading-relaxed">
+            ${msg.replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+        </div>
+    </div>`;
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    const formData = new FormData();
+    formData.append('message', msg);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+    // Show loading state (optional, but good UX)
+    const loadingId = 'loading-' + Date.now();
+    chatbox.innerHTML += `
+    <div id="${loadingId}" class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm mt-1">NF</div>
+        <div class="bg-[#1e40af] text-white px-5 py-3 rounded-2xl rounded-tl-sm shadow-sm text-sm flex gap-1 items-center">
+            <div class="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></div>
+            <div class="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            <div class="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+        </div>
+    </div>`;
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    fetch('{% url "portal:chatbot" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById(loadingId).remove();
+        
+        // Format response (convert newlines to <br>, maybe some bold text)
+        let formattedResponse = data.response.replace(/\n/g, '<br>');
+        
+        // Append AI Message
+        chatbox.innerHTML += `
+        <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-full bg-[#1e40af] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm mt-1">NF</div>
+            <div class="bg-[#1e40af] text-white px-5 py-3 rounded-2xl rounded-tl-sm shadow-sm max-w-[80%] text-sm leading-relaxed">
+                ${formattedResponse}
+            </div>
+        </div>`;
+        chatbox.scrollTop = chatbox.scrollHeight;
+        if (btn) btn.disabled = false;
+        input.focus();
+    })
+    .catch(error => {
+        document.getElementById(loadingId).remove();
+        if (btn) btn.disabled = false;
+    });
+});
+</script>
+{% endblock %}

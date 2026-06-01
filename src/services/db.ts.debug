@@ -1,0 +1,2 @@
+(debug patch - not applied)
+// We'll inject console.debug statements into request() to show URL, headers, and body before fetch.

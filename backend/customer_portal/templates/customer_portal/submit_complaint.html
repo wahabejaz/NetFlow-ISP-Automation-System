@@ -1,0 +1,92 @@
+{% extends 'base_portal.html' %}
+{% load static %}
+{% block content %}
+
+<div class="max-w-3xl">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Submit a Complaint</h1>
+        <p class="text-gray-700 font-medium">Our AI assistant will automatically categorize and prioritize your issue.</p>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <form method="post" action="{% url 'portal:submit_complaint' %}" enctype="multipart/form-data" class="p-6 md:p-8">
+            {% csrf_token %}
+            
+            <!-- Step 1 -->
+            <div class="mb-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Step 1: Describe Your Issue</h2>
+                <div class="relative mb-2">
+                    <textarea name="description" rows="4" required class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg p-4 outline-none focus:border-blue-500 shadow-sm transition-colors resize-none placeholder-gray-500" placeholder="Describe your internet problem in detail... e.g. My internet has been disconnecting every 30 minutes since yesterday evening."></textarea>
+                </div>
+                <div class="text-right text-xs text-gray-500 font-medium mb-6">0/500</div>
+
+                <!-- AI Analysis Box (Mocked visual state) -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 relative">
+                    <div class="absolute top-4 right-4 text-blue-400">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    </div>
+                    <h3 class="font-bold text-gray-900 mb-3 text-sm">AI is analyzing your complaint...</h3>
+                    <ul class="space-y-1 text-sm text-gray-800">
+                        <li><span class="font-bold">- Category:</span> Speed Issue</li>
+                        <li><span class="font-bold">- Priority:</span> Medium</li>
+                        <li><span class="font-bold">- Suggested Fix:</span> Restart your router and ONT device</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="mb-8">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Step 2: Additional Info</h2>
+                
+                <div class="relative mb-6">
+                    <div class="absolute -top-2 left-3 bg-white px-1 text-[10px] font-medium text-gray-500 uppercase tracking-wide z-10">Issue since when?</div>
+                    <select name="issue_since" class="w-full bg-white border border-gray-300 text-gray-800 text-sm rounded-lg px-4 py-3 outline-none focus:border-blue-500 shadow-sm appearance-none relative">
+                        <option value="Today">Today</option>
+                        <option value="Yesterday">Yesterday</option>
+                        <option value="2-3 days">2-3 days</option>
+                        <option value="1 week+">1 week+</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-800 mb-6">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="affects_all_devices" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500">
+                        Affects all devices
+                    </label>
+                    <span class="text-gray-300">|</span>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="only_wifi" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500">
+                        Only WiFi
+                    </label>
+                    <span class="text-gray-300">|</span>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="specific_hours" class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500">
+                        Specific hours only
+                    </label>
+                </div>
+
+                <div>
+                    <label class="inline-flex items-center gap-2 bg-gray-50 border border-dashed border-gray-300 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-lg px-4 py-2 cursor-pointer transition-colors">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Attach screenshot (optional)
+                        <input type="file" name="attachment" class="hidden">
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-[#1d4ed8] hover:bg-blue-800 text-white font-medium rounded-lg py-3 shadow-sm transition-colors text-center">
+                Submit Complaint
+            </button>
+        </form>
+    </div>
+
+    <div class="mt-8 text-center">
+        <a href="{% url 'portal:chatbot' %}" class="text-[#0d9488] hover:text-teal-700 font-bold text-sm inline-flex items-center gap-1 transition-colors">
+            Need instant help? Chat with our AI Support <i class="fa-solid fa-arrow-right text-xs"></i>
+        </a>
+    </div>
+</div>
+
+{% endblock %}

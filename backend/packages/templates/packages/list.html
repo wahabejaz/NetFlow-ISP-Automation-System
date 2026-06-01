@@ -1,0 +1,204 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Header Area -->
+<div class="flex justify-between items-center mb-8">
+    <h2 class="text-3xl font-bold text-gray-900">Internet Packages</h2>
+    <button onclick="document.getElementById('addPackageForm').scrollIntoView({behavior: 'smooth'})" class="bg-[#2563eb] hover:bg-blue-700 text-white font-medium text-sm rounded-md px-5 py-2.5 shadow-sm transition-colors">
+        Add New Package
+    </button>
+</div>
+
+<!-- Packages Row -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+    {% for pkg in packages %}
+    
+    {% if 'Basic' in pkg.name %}
+    <!-- Basic Package Card -->
+    <div class="bg-white rounded-xl border border-[#bae6fd] shadow-sm flex flex-col overflow-hidden">
+        <div class="bg-[#f0f9ff] py-4 text-center border-b border-[#bae6fd]">
+            <h3 class="text-xl font-medium text-gray-800">{{ pkg.name }}</h3>
+        </div>
+        <div class="p-6 flex-1 flex flex-col items-center">
+            <div class="flex items-center gap-3 text-3xl font-bold text-gray-900 mb-4">
+                <i class="fa-solid fa-gauge-high text-[#0284c7]"></i> {{ pkg.speed_mbps }} Mbps
+            </div>
+            <div class="text-xl text-gray-900 font-semibold mb-1">PKR {{ pkg.monthly_price }}<span class="text-sm font-normal text-gray-500">/month</span></div>
+            <div class="text-sm text-gray-600 mb-6">Installation Fee: PKR {{ pkg.installation_fee }}</div>
+            
+            <ul class="space-y-2 mb-8 text-sm text-gray-700 w-full px-4">
+                {% for f in pkg.features.all %}
+                <li class="flex items-center gap-2 justify-center">
+                    {% if f.is_included or not f.is_excluded %}
+                    <i class="fa-solid fa-check text-[#16a34a]"></i> {{ f.feature_name }}
+                    {% else %}
+                    <i class="fa-solid fa-xmark text-gray-400"></i> <span class="text-gray-400 line-through">{{ f.feature_name }}</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> Unlimited Data</li>
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> 24/7 Support</li>
+                <li class="flex items-center gap-2 justify-center text-gray-400"><i class="fa-solid fa-xmark text-gray-400"></i> <span class="line-through">Static IP</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="bg-[#f8fafc] text-center py-4 border-t border-gray-100 text-sm font-medium text-gray-700">
+            Active customers using this: <span class="font-bold text-gray-900">{{ pkg.customer_count|default:"312" }}</span>
+        </div>
+        <div class="bg-[#f8fafc] pb-5 flex justify-center">
+            <div class="bg-white border border-gray-200 rounded-md shadow-sm px-4 py-1.5 text-sm text-gray-600 flex items-center divide-x divide-gray-200">
+                <button class="pr-3 hover:text-gray-900">Edit</button>
+                <button class="pl-3 hover:text-red-600">Deactivate</button>
+            </div>
+        </div>
+    </div>
+
+    {% elif 'Standard' in pkg.name or pkg.is_most_popular %}
+    <!-- Standard Package Card (Most Popular) -->
+    <div class="bg-white rounded-xl border-2 border-[#1e3a8a] shadow-md flex flex-col overflow-hidden relative transform md:-translate-y-2">
+        <div class="absolute top-4 -right-8 bg-[#d97706] text-white text-[10px] font-bold py-1 px-8 transform rotate-45 shadow-sm">
+            Most Popular
+        </div>
+        <div class="bg-[#e0e7ff] py-4 text-center border-b border-[#c7d2fe]">
+            <h3 class="text-xl font-medium text-gray-800">{{ pkg.name }}</h3>
+        </div>
+        <div class="p-6 flex-1 flex flex-col items-center">
+            <div class="flex items-center gap-3 text-4xl font-bold text-gray-900 mb-4 mt-2">
+                <i class="fa-solid fa-gauge-high text-[#1e3a8a]"></i> {{ pkg.speed_mbps }} Mbps
+            </div>
+            <div class="text-xl text-gray-900 font-semibold mb-1">PKR {{ pkg.monthly_price }}<span class="text-sm font-normal text-gray-500">/month</span></div>
+            <div class="text-sm text-transparent mb-6">Spacer</div> <!-- Alignment trick -->
+            
+            <ul class="space-y-2 mb-8 text-sm text-gray-700 w-full px-4">
+                {% for f in pkg.features.all %}
+                <li class="flex items-center gap-2 justify-center">
+                    {% if f.is_included or not f.is_excluded %}
+                    <i class="fa-solid fa-check text-[#16a34a]"></i> {{ f.feature_name }}
+                    {% else %}
+                    <i class="fa-solid fa-xmark text-gray-400"></i> <span class="text-gray-400 line-through">{{ f.feature_name }}</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> Unlimited Data</li>
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> 24/7 Support</li>
+                <li class="flex items-center gap-2 justify-center text-gray-400"><i class="fa-solid fa-xmark text-gray-400"></i> <span class="line-through">Static IP</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="bg-[#f8fafc] text-center py-5 border-t border-gray-100 text-sm font-medium text-gray-700">
+            <span class="font-bold text-gray-900">{{ pkg.customer_count|default:"543" }}</span> customers
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Premium Package Card -->
+    <div class="bg-white rounded-xl border border-[#d8b4fe] shadow-sm flex flex-col overflow-hidden">
+        <div class="bg-[#d8b4fe] py-4 text-center border-b border-[#c084fc]">
+            <h3 class="text-xl font-medium text-gray-900">{{ pkg.name }}</h3>
+        </div>
+        <div class="p-6 flex-1 flex flex-col items-center">
+            <div class="flex items-center gap-3 text-4xl font-bold text-gray-900 mb-4 mt-2">
+                <i class="fa-solid fa-gauge-high text-[#7e22ce]"></i> {{ pkg.speed_mbps }} Mbps
+            </div>
+            <div class="text-xl text-gray-900 font-semibold mb-1">PKR {{ pkg.monthly_price }}<span class="text-sm font-normal text-gray-500">/month</span></div>
+            <div class="text-sm text-transparent mb-6">Spacer</div>
+            
+            <ul class="space-y-2 mb-8 text-sm text-gray-700 w-full px-4">
+                {% for f in pkg.features.all %}
+                <li class="flex items-center gap-2 justify-center">
+                    {% if f.is_included or not f.is_excluded %}
+                    <i class="fa-solid fa-check text-[#16a34a]"></i> {{ f.feature_name }}
+                    {% else %}
+                    <i class="fa-solid fa-xmark text-gray-400"></i> <span class="text-gray-400 line-through">{{ f.feature_name }}</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> Unlimited Data</li>
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> 24/7 Support</li>
+                <li class="flex items-center gap-2 justify-center"><i class="fa-solid fa-check text-[#16a34a]"></i> Static IP</li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="bg-[#f8fafc] text-center py-5 border-t border-gray-100 text-sm font-medium text-gray-700">
+            <span class="font-bold text-gray-900">{{ pkg.customer_count|default:"247" }}</span> customers
+        </div>
+    </div>
+    {% endif %}
+
+    {% empty %}
+    <p class="text-gray-500 md:col-span-3 text-center">No packages configured yet.</p>
+    {% endfor %}
+</div>
+
+<!-- Add Package Form Accordion Box -->
+<div id="addPackageForm" class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center cursor-pointer" onclick="document.getElementById('formBody').classList.toggle('hidden')">
+        <h3 class="text-base font-bold text-gray-900">Add New Package</h3>
+        <i class="fa-solid fa-chevron-up text-gray-400"></i>
+    </div>
+    <div id="formBody" class="p-6">
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="add_package" value="1">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <!-- Package Name -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Package Name</label>
+                    <input type="text" name="name" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors" required>
+                </div>
+                
+                <!-- Speed -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Speed (Mbps)</label>
+                    <input type="number" name="speed_mbps" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors" required>
+                </div>
+                
+                <!-- Monthly Price -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Monthly Price (PKR)</label>
+                    <input type="number" name="monthly_price" step="0.01" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors" required>
+                </div>
+                
+                <!-- Installation Fee -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Installation Fee</label>
+                    <input type="number" name="installation_fee" step="0.01" value="0.00" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors" required>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Description -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Description</label>
+                    <textarea name="description" rows="3" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors"></textarea>
+                </div>
+                
+                <!-- Features (Tag Input simulation) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1.5">Features (tag input - comma separated)</label>
+                    <div class="w-full min-h-[80px] bg-white border border-gray-300 rounded-lg px-3 py-2 flex flex-wrap gap-2 focus-within:border-blue-500 transition-colors">
+                        <input type="text" name="features_input" class="w-full outline-none text-sm" placeholder="Type comma-separated features (e.g. Unlimited Data, Static IP)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Checkbox & Submit -->
+            <div class="flex items-center justify-between mt-4 border-t border-gray-100 pt-6">
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" name="is_most_popular" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <span class="text-sm font-medium text-gray-700">Mark as Most Popular package</span>
+                </label>
+                <button type="submit" class="bg-[#2563eb] hover:bg-blue-700 text-white font-medium text-sm rounded-lg px-6 py-2.5 shadow-sm transition-colors">
+                    Save Package
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

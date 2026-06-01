@@ -1,0 +1,171 @@
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def load_env_file() -> None:
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        os.environ.setdefault(key, value)
+
+
+load_env_file()
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-secret-key-change-me")
+DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "*"]
+
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "corsheaders",
+    "backend.accounts",
+    "backend.audit",
+    "backend.billing",
+    "backend.complaints",
+    "backend.customer_portal",
+    "backend.customers",
+    "backend.dashboard",
+    "backend.notifications",
+    "backend.packages",
+    "backend.technicians",
+    "backend.api",
+]
+
+MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "netflow_backend.csrf_exempt.CsrfExemptApiMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+ROOT_URLCONF = "netflow_backend.urls"
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "backend" / "templates", BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = "netflow_backend.wsgi.application"
+
+DB_NAME = os.environ.get("DB_NAME", "isp_automation_system")
+DB_USER = os.environ.get("DB_USER", "root")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
+DB_PORT = os.environ.get("DB_PORT", "3306")
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": DB_NAME,
+        "USER": DB_USER,
+        "PASSWORD": DB_PASSWORD,
+        "HOST": DB_HOST,
+        "PORT": DB_PORT,
+        "OPTIONS": {
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+
+AUTH_USER_MODEL = "accounts.CustomUser"
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+LANGUAGE_CODE = "en-us"
+TIME_ZONE = "UTC"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+# Email configuration (reads from environment; sensible defaults provided)
+# By default in development (DEBUG=True) the console backend is used so emails
+# are printed to the terminal. In production (DEBUG=False) the SMTP backend
+# will be used by default. All credentials are read from environment variables
+# and never hard-coded.
+# Determine EMAIL_BACKEND:
+# Priority: explicit EMAIL_BACKEND env > SMTP if credentials present > console when DEBUG else SMTP
+explicit_backend = os.environ.get("EMAIL_BACKEND")
+if explicit_backend:
+    EMAIL_BACKEND = explicit_backend
+else:
+    # If SMTP credentials are provided, prefer SMTP even during development
+    if os.environ.get("EMAIL_HOST_USER") and os.environ.get("EMAIL_HOST_PASSWORD"):
+        EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    else:
+        EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend"
+
+# SMTP host/port defaults favor Gmail when running in production mode but keep
+# localhost/25 for quick local development when DEBUG is enabled.
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com" if not DEBUG else "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587" if not DEBUG else "25"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1" if not DEBUG else "0") == "1"
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "0") == "1"
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
+
+# Default "From" sender: prefer explicit DEFAULT_FROM_EMAIL, otherwise use
+# branded sender using the SMTP user (if provided).
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL") or ((f"NetFlow ISP <{EMAIL_HOST_USER}>") if EMAIL_HOST_USER else "NetFlow ISP <no-reply@netflow.local>")
+
+# SERVER_EMAIL is the address that error emails come from (use same as DEFAULT_FROM_EMAIL unless overridden)
+SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+if not os.environ.get("GEMINI_API_KEY"):
+    print("Warning: GEMINI_API_KEY is not set. AI analyze endpoint will return a configuration error until it is provided.")

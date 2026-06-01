@@ -1,0 +1,291 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+{% block content %}
+
+<div class="flex h-[calc(100vh-100px)] gap-6">
+    <!-- Left Column: Complaints List -->
+    <div class="w-[500px] flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden shrink-0">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-100">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Complaints <span class="text-gray-500 font-normal">({{ complaints.count }} open)</span></h2>
+            <div class="flex text-sm text-gray-600 gap-2 font-medium">
+                <span class="text-gray-900 border-b-2 border-gray-900 pb-1 cursor-pointer">All</span>
+                <span class="text-gray-300">|</span>
+                <span class="text-orange-600 hover:text-orange-700 cursor-pointer">Urgent</span>
+                <span class="text-gray-300">|</span>
+                <span class="hover:text-gray-900 cursor-pointer">Open</span>
+                <span class="text-gray-300">|</span>
+                <span class="hover:text-gray-900 cursor-pointer">In Progress</span>
+                <span class="text-gray-300">|</span>
+                <span class="hover:text-gray-900 cursor-pointer">Resolved</span>
+            </div>
+        </div>
+
+        <!-- Scrollable List -->
+        <div class="overflow-y-auto flex-1 p-4 space-y-3">
+            {% for c in complaints %}
+            <div class="border rounded-xl flex overflow-hidden cursor-pointer hover:shadow-md transition-shadow bg-white {% if c.ai_priority == 'urgent' %}border-orange-200{% else %}border-gray-200{% endif %}">
+                <!-- Priority Color Strip -->
+                <div class="w-2/5 p-4 {% if c.ai_priority == 'urgent' %}bg-[#fb923c] text-white{% elif c.ai_priority == 'medium' %}bg-[#fed7aa] text-gray-900{% else %}bg-[#bbf7d0] text-gray-900{% endif %}">
+                    <div class="font-bold text-sm mb-2">Ticket {{ c.ticket_number }}</div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-xs text-gray-600 font-bold">
+                            {{ c.customer.user.first_name|slice:":1" }}{{ c.customer.user.last_name|slice:":1" }}
+                        </div>
+                        <div class="font-bold text-sm truncate">{{ c.customer.user.get_full_name }}</div>
+                    </div>
+                    <div class="text-xs opacity-90 truncate">{{ c.description|truncatechars:40 }}</div>
+                </div>
+
+                <!-- Details Section -->
+                <div class="w-3/5 p-4 flex flex-col justify-between relative">
+                    <div class="absolute top-4 right-4 text-xs font-medium text-gray-500">2 hours ago</div>
+                    
+                    <div class="flex gap-4 mt-1">
+                        <div>
+                            <div class="text-[10px] text-gray-500 font-bold mb-1 uppercase">AI Priority</div>
+                            {% if c.ai_priority == 'urgent' %}
+                            <span class="bg-[#ffedd5] text-[#ea580c] px-3 py-1 rounded-full text-xs font-bold">Urgent</span>
+                            {% elif c.ai_priority == 'medium' %}
+                            <span class="bg-[#fef3c7] text-[#d97706] px-3 py-1 rounded-full text-xs font-bold">Medium</span>
+                            {% else %}
+                            <span class="bg-[#dcfce7] text-[#16a34a] px-3 py-1 rounded-full text-xs font-bold">Low</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-500 font-bold mb-1 uppercase">AI Category</div>
+                            <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">{{ c.get_ai_category_display|default:"Speed Issue" }}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-2">
+                        {% if c.assigned_technician %}
+                        <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs" title="Assigned: {{ c.assigned_technician.user.get_full_name }}">
+                            {{ c.assigned_technician.user.first_name|slice:":1" }}
+                        </div>
+                        {% else %}
+                        <div class="w-6 h-6 rounded-full bg-gray-100 border border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-xs" title="Unassigned">
+                            <i class="fa-solid fa-user-plus text-[10px]"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <!-- Mockup match if empty DB -->
+            <div class="border border-orange-200 rounded-xl flex overflow-hidden cursor-pointer hover:shadow-md transition-shadow bg-white">
+                <div class="w-2/5 p-4 bg-[#fed7aa] text-gray-900">
+                    <div class="font-bold text-sm mb-2">Ticket #CMP-0234</div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold">AH</div>
+                        <div class="font-bold text-sm">Ahmed Hassan</div>
+                    </div>
+                    <div class="text-xs opacity-90 truncate">Internet keeps disconnecting every...</div>
+                </div>
+                <div class="w-3/5 p-4 flex flex-col justify-between relative">
+                    <div class="absolute top-4 right-4 text-xs font-medium text-gray-500">2 hours ago</div>
+                    <div class="flex gap-4 mt-1">
+                        <div>
+                            <div class="text-[10px] text-gray-500 font-bold mb-1 uppercase">AI Priority</div>
+                            <span class="bg-[#fef3c7] text-[#d97706] px-3 py-1 rounded-full text-xs font-bold">Medium</span>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-500 font-bold mb-1 uppercase">AI Category</div>
+                            <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold">Speed Issue</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-2">
+                        <div class="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xs">T</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Column: Ticket Details -->
+    <div class="flex-1 bg-white rounded-xl border border-gray-200 shadow-sm overflow-y-auto p-8 relative">
+        {% if selected_complaint %}
+        
+        <!-- Ticket Header -->
+        <div class="mb-6">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Ticket {{ selected_complaint.ticket_number }}</h2>
+            <div class="text-sm text-gray-600 flex gap-2 divide-x divide-gray-300">
+                <span class="pr-2">Customer: <span class="font-medium text-gray-900">{{ selected_complaint.customer.user.get_full_name }}</span></span>
+                <span class="px-2">Area: <span class="font-medium text-gray-900">{{ selected_complaint.customer.city|default:"Gulberg III" }}</span></span>
+                <span class="pl-2">Package: <span class="font-medium text-gray-900">{{ selected_complaint.customer.package.name|default:"25 Mbps" }}</span></span>
+            </div>
+        </div>
+
+        <!-- AI Smart Analysis Block -->
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-500 rounded-xl p-6 text-white mb-8 shadow-md">
+            <div class="flex items-center gap-2 font-bold text-lg mb-4">
+                <i class="fa-regular fa-lightbulb"></i> AI Smart Analysis
+            </div>
+            <div class="space-y-2 text-sm text-blue-50">
+                <div><span class="font-medium text-white opacity-80">Category detected:</span> {{ selected_complaint.get_ai_category_display|default:"Router Instability" }}</div>
+                <div><span class="font-medium text-white opacity-80">Priority:</span> {{ selected_complaint.get_ai_priority_display|default:"Medium" }}</div>
+                <div><span class="font-medium text-white opacity-80">Confidence:</span> {{ selected_complaint.ai_confidence|default:"87" }}%</div>
+                <div><span class="font-medium text-white opacity-80">Suggested Action:</span> {{ selected_complaint.ai_suggested_action|default:"Restart ONT device, check splitter connection" }}</div>
+                <div><span class="font-medium text-white opacity-80">Estimated resolution:</span> {{ selected_complaint.ai_estimated_resolution|default:"2-4 hours" }}</div>
+            </div>
+        </div>
+
+        <!-- User Description -->
+        <div class="text-gray-700 text-sm leading-relaxed mb-8">
+            {{ selected_complaint.description }}
+        </div>
+
+        <!-- Actions & Timeline Area -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Left Side: Timeline / Assignment -->
+            <div>
+                <!-- Assignment Form -->
+                <h3 class="font-bold text-gray-900 mb-3">Technician Assignment</h3>
+                <form method="post" action="{% url 'complaints:list' %}" class="flex gap-2 mb-8">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_id" value="{{ selected_complaint.id }}">
+                    <select name="technician_id" class="flex-1 bg-white border border-gray-300 text-gray-700 text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500">
+                        <option value="">Select a technician...</option>
+                        {% for t in technicians %}
+                        <option value="{{ t.id }}" {% if selected_complaint.assigned_technician_id == t.id %}selected{% endif %}>{{ t.user.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="assign_technician" class="bg-[#0f172a] hover:bg-black text-white font-medium text-sm rounded-lg px-4 py-2 transition-colors">
+                        Assign
+                    </button>
+                </form>
+
+                <!-- Workflow Stepper -->
+                <div class="relative pl-4 border-l-2 border-gray-200 space-y-6">
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-blue-600 border-2 border-white ring-2 ring-blue-100"></div>
+                        <div class="font-medium text-sm text-gray-900">Submitted <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-white ring-2 ring-blue-100"></div>
+                        <div class="font-medium text-sm text-gray-900">AI Analyzed <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full {% if selected_complaint.status in 'assigned,in_progress,resolved' %}bg-blue-400 border-2 border-white ring-2 ring-blue-100{% else %}bg-gray-300 border-2 border-white{% endif %}"></div>
+                        <div class="font-medium text-sm text-gray-900">Assigned <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full {% if selected_complaint.status in 'in_progress,resolved' %}bg-blue-300 border-2 border-white ring-2 ring-blue-100{% else %}bg-gray-300 border-2 border-white{% endif %}"></div>
+                        <div class="font-medium text-sm text-gray-900">In Progress <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full {% if selected_complaint.status == 'resolved' %}bg-green-500 border-2 border-white ring-2 ring-green-100{% else %}bg-gray-300 border-2 border-white{% endif %}"></div>
+                        <div class="font-medium text-sm text-gray-900">Resolved</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Notes -->
+            <div>
+                <h3 class="font-bold text-gray-900 mb-3">Add Note</h3>
+                <form method="post" action="{% url 'complaints:list' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="ticket_id" value="{{ selected_complaint.id }}">
+                    <textarea name="note" rows="4" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg px-3 py-2 outline-none focus:border-blue-500 mb-2" placeholder="Add Note"></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit" name="add_note" class="bg-[#0f172a] hover:bg-black text-white font-medium text-sm rounded-lg px-6 py-2 transition-colors">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Display Notes (Optional enhancement) -->
+                {% if selected_complaint.notes.exists %}
+                <div class="mt-6 space-y-3">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Previous Notes</h4>
+                    {% for note in selected_complaint.notes.all %}
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-xs font-bold text-gray-900">{{ note.added_by.get_full_name }}</span>
+                            <span class="text-[10px] text-gray-500">{{ note.created_at|date:"d M Y H:i" }}</span>
+                        </div>
+                        <div class="text-xs text-gray-700">{{ note.note }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+        {% else %}
+        <!-- Mockup matching if no tickets exist -->
+        <div class="mb-6">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Ticket #CMP-0234</h2>
+            <div class="text-sm text-gray-600 flex gap-2 divide-x divide-gray-300">
+                <span class="pr-2">Customer: <span class="font-medium text-gray-900">Ahmed Hassan</span></span>
+                <span class="px-2">Area: <span class="font-medium text-gray-900">Gulberg III</span></span>
+                <span class="pl-2">Package: <span class="font-medium text-gray-900">25 Mbps</span></span>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-600 to-indigo-500 rounded-xl p-6 text-white mb-8 shadow-md">
+            <div class="flex items-center gap-2 font-bold text-lg mb-4">
+                <i class="fa-regular fa-lightbulb"></i> AI Smart Analysis
+            </div>
+            <div class="space-y-2 text-sm text-blue-50">
+                <div><span class="font-medium text-white opacity-80">Category detected:</span> Router Instability</div>
+                <div><span class="font-medium text-white opacity-80">Priority:</span> Medium</div>
+                <div><span class="font-medium text-white opacity-80">Confidence:</span> 87%</div>
+                <div><span class="font-medium text-white opacity-80">Suggested Action:</span> Restart ONT device, check splitter connection</div>
+                <div><span class="font-medium text-white opacity-80">Estimated resolution:</span> 2-4 hours</div>
+            </div>
+        </div>
+
+        <div class="text-gray-700 text-sm leading-relaxed mb-8">
+            Internet keeps disconnecting every speeds of 5 mbps. Internet keeps disconnecting or workenibar Action : Restart ONT device, check splitter connection. Description :: Internet keeps disconnecting every.
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="font-bold text-gray-900 mb-3">Technician Assignment</h3>
+                <div class="flex gap-2 mb-8">
+                    <select class="flex-1 bg-white border border-gray-300 text-gray-700 text-sm rounded-lg px-3 py-2 outline-none">
+                        <option>Select a technician...</option>
+                    </select>
+                    <button class="bg-[#0f172a] hover:bg-black text-white font-medium text-sm rounded-lg px-4 py-2">Assign</button>
+                </div>
+                <!-- Stepper -->
+                <div class="relative pl-4 border-l-2 border-gray-200 space-y-6">
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-blue-600 border-2 border-white ring-2 ring-blue-100"></div>
+                        <div class="font-medium text-sm text-gray-900">Submitted <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-blue-500 border-2 border-white ring-2 ring-blue-100"></div>
+                        <div class="font-medium text-sm text-gray-900">AI Analyzed <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-gray-300 border-2 border-white"></div>
+                        <div class="font-medium text-sm text-gray-900">Assigned <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-gray-300 border-2 border-white"></div>
+                        <div class="font-medium text-sm text-gray-900">In Progress <i class="fa-solid fa-arrow-right text-xs text-gray-400 ml-1"></i></div>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-gray-300 border-2 border-white"></div>
+                        <div class="font-medium text-sm text-gray-900">Resolved</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-900 mb-3">Add Note</h3>
+                <textarea rows="4" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg px-3 py-2 outline-none mb-2" placeholder="Add Note"></textarea>
+                <div class="flex justify-end">
+                    <button class="bg-[#0f172a] hover:bg-black text-white font-medium text-sm rounded-lg px-6 py-2">Submit</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

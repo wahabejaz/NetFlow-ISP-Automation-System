@@ -396,11 +396,19 @@ def invoice_list_view(request):
         status=payload.get("status", "unpaid").lower(),
     )
     log_action(request, "CREATE", "Bill", bill.id, payload)
-    # send invoice email notification (best-effort)
-    try:
-        send_invoice_email(bill)
-    except Exception:
-        pass
+    # send invoice email notification, but keep invoice creation functional
+    email_result = send_invoice_email(bill)
+    if not email_result.get("sent"):
+        logger.warning(
+            "Invoice %s created but email sending failed: %s",
+            bill.invoice_number,
+            email_result.get("reason"),
+        )
+        response_data = normalize_invoice(bill)
+        response_data["emailSent"] = False
+        response_data["emailError"] = email_result.get("reason")
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
     return Response(normalize_invoice(bill), status=status.HTTP_201_CREATED)
 
 
@@ -422,10 +430,19 @@ def invoice_detail_view(request, pk):
         )
 
     if payload.get("sendEmail"):
-        try:
-            send_invoice_email(bill)
-        except Exception:
-            pass
+        email_result = send_invoice_email(bill)
+        if not email_result.get("sent"):
+            logger.warning(
+                "Invoice %s updated but email sending failed: %s",
+                bill.invoice_number,
+                email_result.get("reason"),
+            )
+            response_data = normalize_invoice(bill)
+            response_data["emailSent"] = False
+            response_data["emailError"] = email_result.get("reason")
+            bill.save()
+            log_action(request, "UPDATE", "Bill", bill.id, payload)
+            return Response(response_data)
 
     bill.save()
     log_action(request, "UPDATE", "Bill", bill.id, payload)

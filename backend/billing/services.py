@@ -18,11 +18,21 @@ def send_invoice_email(bill: Bill):
     """
     customer = getattr(bill, "customer", None)
     to_email = None
+    result = {"sent": False, "reason": None}
     try:
         to_email = customer.user.email if customer and getattr(customer, 'user', None) and customer.user.email else None
         if not to_email:
             logger.info("Invoice %s: customer has no email, skipping send.", getattr(bill, 'invoice_number', ''))
-            return False
+            result["reason"] = "Customer email address is missing."
+            return result
+
+        if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD:
+            logger.warning(
+                "Invoice %s: SMTP email credentials are missing; email not sent.",
+                getattr(bill, 'invoice_number', ''),
+            )
+            result["reason"] = "SMTP email credentials are not configured on the server."
+            return result
 
         context = {
             'customer_name': customer.user.get_full_name() or customer.user.username,
@@ -56,13 +66,16 @@ def send_invoice_email(bill: Bill):
         try:
             msg.send(fail_silently=False)
             logger.info("Invoice %s: sent to %s", bill.invoice_number, to_email)
-            return True
-        except Exception:
+            result["sent"] = True
+            return result
+        except Exception as exc:
             logger.exception("Failed to send invoice %s to %s", bill.invoice_number, to_email)
-            return False
-    except Exception:
+            result["reason"] = str(exc)
+            return result
+    except Exception as exc:
         logger.exception("Unexpected error in send_invoice_email for invoice %s to %s", getattr(bill, 'invoice_number', ''), to_email)
-        return False
+        result["reason"] = str(exc)
+        return result
 
 
 def send_due_reminders(days_ahead: int = 3):

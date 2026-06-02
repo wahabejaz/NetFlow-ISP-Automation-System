@@ -213,5 +213,10 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL") or ((f"NetFlow ISP <{E
 # SERVER_EMAIL is the address that error emails come from (use same as DEFAULT_FROM_EMAIL unless overridden)
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 
+if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+    print(
+        "Warning: SMTP email credentials are not configured. Invoice email delivery will fail until EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are provided."
+    )
+
 if not os.environ.get("GEMINI_API_KEY"):
     print("Warning: GEMINI_API_KEY is not set. AI analyze endpoint will return a configuration error until it is provided.")

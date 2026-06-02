@@ -151,13 +151,17 @@ CORS_ALLOW_CREDENTIALS = True
 if not DEBUG:
     # Production CORS settings - restrict to your frontend URL on Vercel
     CORS_ALLOWED_ORIGINS = [
-        "https://your-frontend.vercel.app",  # Replace with your actual Vercel frontend URL
+        "https://net-flow-isp-automation-system.vercel.app",
+        os.environ.get("FRONTEND_URL", "https://net-flow-isp-automation-system.vercel.app"),
         "http://localhost:3000",  # Keep for local development
     ]
+    CORS_ALLOWED_ORIGINS = [url for url in CORS_ALLOWED_ORIGINS if url]  # Remove duplicates/empty
     CSRF_TRUSTED_ORIGINS = [
-        "https://your-frontend.vercel.app",
+        "https://net-flow-isp-automation-system.vercel.app",
+        os.environ.get("FRONTEND_URL", "https://net-flow-isp-automation-system.vercel.app"),
         "http://localhost:3000",
     ]
+    CSRF_TRUSTED_ORIGINS = [url for url in CSRF_TRUSTED_ORIGINS if url]  # Remove duplicates/empty
     # Security settings for production
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True

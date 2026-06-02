@@ -56,13 +56,9 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 ```
 
 ### Step 5: Run Migrations
-Once deployed:
-1. Go to Render Dashboard → Your service
-2. Click "Shell" tab
-3. Run:
-```bash
-python manage.py migrate
-```
+Render will now run migrations automatically using the release command during deployment. No shell access is required on the free plan.
+
+If you need to rerun migrations manually later, use a deploy hook or update the `releaseCommand` in `render.yaml`.
 
 ### Step 6: Update Frontend
 1. Get backend URL from Render dashboard (e.g., `https://isp-backend.onrender.com`)

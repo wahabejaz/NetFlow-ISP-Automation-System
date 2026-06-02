@@ -93,11 +93,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "netflow_backend.wsgi.application"
 
-DB_NAME = os.environ.get("DB_NAME", "isp_automation_system")
-DB_USER = os.environ.get("DB_USER", "root")
-DB_PASSWORD = os.environ.get("DB_PASSWORD")
-DB_HOST = os.environ.get("DB_HOST", "127.0.0.1")
+DB_NAME = os.environ.get("DB_NAME", "defaultdb")
+DB_USER = os.environ.get("DB_USER", "avnadmin")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = os.environ.get("DB_PORT", "3306")
+
+# Validate critical DB credentials in production
+if not DEBUG and not DB_PASSWORD:
+    import warnings
+    warnings.warn("DB_PASSWORD environment variable not set. Database connection will fail.", RuntimeWarning)
 
 DATABASES = {
     "default": {
@@ -106,14 +111,17 @@ DATABASES = {
         "USER": DB_USER,
         "PASSWORD": DB_PASSWORD,
         "HOST": DB_HOST,
-        "PORT": DB_PORT,
+        "PORT": int(DB_PORT),
         "OPTIONS": {
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            "charset": "utf8mb4",
+            "autocommit": True,
             "ssl": {
-                "ca": None,  # Planet Scale requires SSL
+                "ca": None,
             },
         },
-        "CONN_MAX_AGE": 60,  # Connection pooling for production
+        "CONN_MAX_AGE": 60,
+        "ATOMIC_REQUESTS": True,
     }
 }
 

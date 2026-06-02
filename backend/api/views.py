@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 
 from django.contrib.auth import authenticate
@@ -8,6 +9,8 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 from backend.accounts.models import CustomUser
 from backend.audit.models import AuditLog
@@ -70,44 +73,48 @@ def get_request_payload(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login_view(request):
-    email = request.data.get("email") or request.data.get("username")
-    password = request.data.get("password")
-    selected_role = (request.data.get("role") or "").lower()
+    try:
+        email = request.data.get("email") or request.data.get("username")
+        password = request.data.get("password")
+        selected_role = (request.data.get("role") or "").lower()
 
-    if not email or not password:
-        return Response({"detail": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not email or not password:
+            return Response({"detail": "Email and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Determine unique username based on role backward-compatibly
-    auth_username = email
-    if selected_role == "technician":
-        if CustomUser.objects.filter(username=f"{email}_tech").exists():
-            auth_username = f"{email}_tech"
+        # Determine unique username based on role backward-compatibly
+        auth_username = email
+        if selected_role == "technician":
+            if CustomUser.objects.filter(username=f"{email}_tech").exists():
+                auth_username = f"{email}_tech"
 
-    user = authenticate(username=auth_username, password=password)
-    if user is None and not CustomUser.objects.exists():
-        ensure_seed_data()
         user = authenticate(username=auth_username, password=password)
+        if user is None and not CustomUser.objects.exists():
+            ensure_seed_data()
+            user = authenticate(username=auth_username, password=password)
 
-    if user is None:
-        return Response({"detail": "Invalid email or password."}, status=status.HTTP_401_UNAUTHORIZED)
+        if user is None:
+            return Response({"detail": "Invalid email or password."}, status=status.HTTP_401_UNAUTHORIZED)
 
-    if selected_role and user.role != selected_role:
-        return Response({"detail": "Role mismatch for the selected account."}, status=status.HTTP_403_FORBIDDEN)
+        if selected_role and user.role != selected_role:
+            return Response({"detail": "Role mismatch for the selected account."}, status=status.HTTP_403_FORBIDDEN)
 
-    token, _ = Token.objects.get_or_create(user=user)
-    log_action(request, "LOGIN", "CustomUser", user.id, {"role": user.role})
-    return Response(
-        {
-            "token": token.key,
-            "role": user.role,
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "name": user.get_full_name() or user.username,
+        token, _ = Token.objects.get_or_create(user=user)
+        log_action(request, "LOGIN", "CustomUser", user.id, {"role": user.role})
+        return Response(
+            {
+                "token": token.key,
+                "role": user.role,
+                "user": {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.get_full_name() or user.username,
+                },
             },
-        },
-        status=status.HTTP_200_OK,
-    )
+            status=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        logger.exception(f"Login error: {str(e)}")
+        return Response({"detail": f"Server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(["GET"])

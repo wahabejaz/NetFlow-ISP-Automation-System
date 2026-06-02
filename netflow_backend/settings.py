@@ -199,7 +199,7 @@ else:
 # SMTP host/port defaults favor Gmail when running in production mode but keep
 # localhost/25 for quick local development when DEBUG is enabled.
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com" if not DEBUG else "localhost")
-EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587" if not DEBUG else "25"))
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587" if not DEBUG else "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1" if not DEBUG else "0") == "1"

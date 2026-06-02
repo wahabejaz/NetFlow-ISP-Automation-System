@@ -3,31 +3,32 @@ Management command to test SMTP email configuration and connectivity.
 
 Usage:
     python manage.py test_email [--recipient user@example.com]
-    python manage.py test_email  # Uses DEFAULT_FROM_EMAIL as recipient
+    python manage.py test_email  # Uses first customer email from database
 
 This command helps diagnose email delivery issues by:
 - Checking SMTP credentials
 - Attempting SMTP connection
-- Sending a test email
+- Sending an actual test email to real customer
 - Reporting success/failure with detailed diagnostics
 """
 import logging
 from django.core.management.base import BaseCommand, CommandError
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from backend.customers.models import Customer
 
 logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = "Test SMTP email configuration and send a test email"
+    help = "Test SMTP email configuration and send a test email to a customer"
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--recipient',
             type=str,
             default=None,
-            help='Email recipient for test message (defaults to DEFAULT_FROM_EMAIL)'
+            help='Email recipient for test message (defaults to first customer email)'
         )
 
     def handle(self, *args, **options):
@@ -51,18 +52,24 @@ class Command(BaseCommand):
         if not connection_ok:
             raise CommandError("SMTP connection failed")
 
-        # Step 3: Send test email
-        self.stdout.write("\n📧 Sending test email...\n")
-        recipient = options.get('recipient') or self._extract_email_from_sender()
+        # Step 3: Get recipient email
+        self.stdout.write("\n📧 Finding test recipient...\n")
+        recipient = options.get('recipient')
+        
+        if not recipient:
+            # Get first customer with valid email
+            recipient = self._get_customer_email()
         
         if not recipient:
             raise CommandError(
-                "No recipient specified and cannot extract from DEFAULT_FROM_EMAIL. "
-                "Use --recipient user@example.com"
+                "No recipient specified and no customer emails found in database. "
+                "Use --recipient user@example.com or create a customer first."
             )
 
-        self.stdout.write(f"   To: {recipient}")
-        
+        self.stdout.write(f"   To: {recipient}\n")
+
+        # Step 4: Send test email
+        self.stdout.write("📧 Sending test email...\n")
         send_ok = self._send_test_email(recipient)
         if not send_ok:
             raise CommandError("Email send failed")
@@ -111,33 +118,38 @@ class Command(BaseCommand):
             logger.exception("SMTP connection test failed")
             return False
 
-    def _extract_email_from_sender(self):
-        """Extract email address from DEFAULT_FROM_EMAIL string."""
-        sender = settings.DEFAULT_FROM_EMAIL
-        if "<" in sender and ">" in sender:
-            start = sender.find("<") + 1
-            end = sender.find(">")
-            if end > start:
-                return sender[start:end]
-        return None
+    def _get_customer_email(self):
+        """Get the first customer's email from the database."""
+        try:
+            customer = Customer.objects.filter(user__email__isnull=False).exclude(user__email='').first()
+            if customer and customer.user.email:
+                return customer.user.email
+            return None
+        except Exception as e:
+            logger.exception("Error retrieving customer email from database")
+            return None
 
     def _send_test_email(self, recipient):
-        """Send a test email."""
+        """Send a test email to verify SMTP configuration."""
         try:
-            subject = "NetFlow ISP - Email Configuration Test"
+            subject = "NetFlow ISP - SMTP Configuration Test"
             text_body = (
                 "This is a test email from your NetFlow ISP Automation System.\n\n"
-                "If you received this, your email configuration is working correctly.\n"
+                "This email was sent to verify your SMTP email configuration is working correctly.\n\n"
+                "If you received this, your email system is operational and ready for production invoices and notifications.\n"
                 f"\nTest sent at: {__import__('django.utils.timezone', fromlist=['now']).now().isoformat()}\n"
                 f"From: {settings.DEFAULT_FROM_EMAIL}\n"
                 f"SMTP Host: {settings.EMAIL_HOST}\n"
             )
             html_body = (
                 "<html><body>"
-                "<h2>NetFlow ISP - Email Configuration Test</h2>"
+                "<h2>NetFlow ISP - SMTP Configuration Test</h2>"
                 "<p>This is a test email from your NetFlow ISP Automation System.</p>"
-                "<p>If you received this, your email configuration is working correctly.</p>"
-                f"<p><small>Test sent at: {__import__('django.utils.timezone', fromlist=['now']).now().isoformat()}</small></p>"
+                "<p>This email was sent to verify your SMTP email configuration is working correctly.</p>"
+                "<p><strong>If you received this, your email system is operational and ready for production invoices and notifications.</strong></p>"
+                f"<p><small>Test sent at: {__import__('django.utils.timezone', fromlist=['now']).now().isoformat()}<br/>"
+                f"From: {settings.DEFAULT_FROM_EMAIL}<br/>"
+                f"SMTP Host: {settings.EMAIL_HOST}</small></p>"
                 "</body></html>"
             )
 

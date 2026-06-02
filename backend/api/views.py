@@ -431,18 +431,23 @@ def invoice_detail_view(request, pk):
 
     if payload.get("sendEmail"):
         email_result = send_invoice_email(bill)
+        response_data = normalize_invoice(bill)
         if not email_result.get("sent"):
             logger.warning(
                 "Invoice %s updated but email sending failed: %s",
                 bill.invoice_number,
                 email_result.get("reason"),
             )
-            response_data = normalize_invoice(bill)
             response_data["emailSent"] = False
             response_data["emailError"] = email_result.get("reason")
             bill.save()
             log_action(request, "UPDATE", "Bill", bill.id, payload)
             return Response(response_data)
+
+        response_data["emailSent"] = True
+        bill.save()
+        log_action(request, "UPDATE", "Bill", bill.id, payload)
+        return Response(response_data)
 
     bill.save()
     log_action(request, "UPDATE", "Bill", bill.id, payload)

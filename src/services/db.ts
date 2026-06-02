@@ -329,7 +329,12 @@ export async function addInvoice(inv: Invoice): Promise<string> {
   return created.id || "";
 }
 
-export async function updateInvoice(id: string, updates: Partial<Invoice> & { sendEmail?: boolean }): Promise<void> {
+export interface InvoiceUpdateResponse extends Invoice {
+  emailSent?: boolean;
+  emailError?: string;
+}
+
+export async function updateInvoice(id: string, updates: Partial<Invoice> & { sendEmail?: boolean }): Promise<InvoiceUpdateResponse> {
   const payload: any = {
     status: updates.status,
     method: updates.method,
@@ -342,7 +347,7 @@ export async function updateInvoice(id: string, updates: Partial<Invoice> & { se
     throw new Error('updateInvoice called with empty id');
   }
 
-  await request<void>(`/invoices/${encodeURIComponent(String(id))}/`, {
+  return request<InvoiceUpdateResponse>(`/invoices/${encodeURIComponent(String(id))}/`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
   });

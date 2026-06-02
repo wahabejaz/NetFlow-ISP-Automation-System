@@ -16,6 +16,7 @@ export default function BillingManagement() {
 
   // Interactive logs
   const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleAfterPrint = () => {
@@ -61,15 +62,24 @@ export default function BillingManagement() {
   const handleSendReminder = async () => {
     if (!selectedInvoice?.id) return;
     try {
-      // Dev log: show which invoice id and payload are sent from the UI
+      setEmailError(null);
       const isDev = typeof import.meta !== 'undefined' && Boolean((import.meta as any).env && (import.meta as any).env.DEV);
       if (isDev) console.log('[ui] Sending reminder for invoice id:', selectedInvoice.id, { sendEmail: true });
-      await updateInvoice(selectedInvoice.id, { sendEmail: true });
-      setEmailSent(true);
-      setTimeout(() => setEmailSent(false), 3000);
+      const result = await updateInvoice(selectedInvoice.id, { sendEmail: true });
+      if (result.emailSent) {
+        setEmailSent(true);
+        setTimeout(() => setEmailSent(false), 3000);
+      } else {
+        const errorMessage = result.emailError || 'Failed to send invoice email.';
+        setEmailError(errorMessage);
+        console.error('[ui] Email send failed', errorMessage);
+        alert(errorMessage);
+      }
     } catch (err) {
       console.error(err);
-      alert('Failed to send invoice email.');
+      const message = err instanceof Error ? err.message : 'Failed to send invoice email.';
+      setEmailError(message);
+      alert(message);
     }
   };
 
@@ -338,6 +348,11 @@ export default function BillingManagement() {
                <button type="button" className="btn btn-outline" style={{ display: 'flex', justifyContent: 'center', width: '100%', gap: '0.5rem', background: 'white', color: '#16a34a', borderColor: '#16a34a' }} onClick={handleSendReminder}>
                  <Send size={16} /> Send Invoice Email
                </button>
+            )}
+            {emailError && (
+              <div style={{ color: '#dc2626', fontSize: '0.8rem', textAlign: 'center', margin: '0.5rem 0' }}>
+                {emailError}
+              </div>
             )}
           </div>
         </div>

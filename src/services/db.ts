@@ -1,4 +1,12 @@
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const API_ENV = import.meta.env.VITE_API_URL || "";
+const API_BASE = (() => {
+  // In development without a VITE_API_URL, use the relative `/api` path.
+  if (!API_ENV) return "/api";
+  // Normalize: remove trailing slashes and ensure the `/api` prefix is present.
+  let url = API_ENV.replace(/\/+$/, "");
+  if (!url.endsWith("/api")) url = `${url}/api`;
+  return url;
+})();
 
 export interface Customer {
   id?: string;

@@ -10,6 +10,18 @@ from .models import Bill
 logger = logging.getLogger(__name__)
 
 
+def _extract_email_from_sender(sender_string):
+    """Extract email address from sender string like 'Name <email@domain>'."""
+    if not sender_string:
+        return None
+    if "<" in sender_string and ">" in sender_string:
+        start = sender_string.find("<") + 1
+        end = sender_string.find(">", start)
+        if end > start:
+            return sender_string[start:end]
+    return sender_string
+
+
 def send_invoice_email(bill: Bill):
     """Send invoice created email to the customer.
 
@@ -52,7 +64,7 @@ def send_invoice_email(bill: Bill):
             'invoice_number': bill.invoice_number,
             'total_amount': f"{bill.total_amount:.0f} PKR",
             'due_date': bill.due_date.strftime('%b %d, %Y'),
-            'support_email': settings.EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL,
+            'support_email': _extract_email_from_sender(settings.DEFAULT_FROM_EMAIL),
         }
 
         subject = f"NetFlow ISP - New Invoice Generated: {bill.invoice_number}"
@@ -63,17 +75,8 @@ def send_invoice_email(bill: Bill):
         msg = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[to_email])
         msg.attach_alternative(html_body, "text/html")
         
-        # Configure Reply-To: prefer explicit SMTP user, else extract from DEFAULT_FROM_EMAIL
-        reply_to_addr = None
-        if settings.EMAIL_HOST_USER:
-            reply_to_addr = settings.EMAIL_HOST_USER
-        else:
-            # try to extract address from DEFAULT_FROM_EMAIL like 'Name <email@domain>'
-            if "<" in settings.DEFAULT_FROM_EMAIL and ">" in settings.DEFAULT_FROM_EMAIL:
-                start = settings.DEFAULT_FROM_EMAIL.find("<") + 1
-                end = settings.DEFAULT_FROM_EMAIL.find(">", start)
-                if end > start:
-                    reply_to_addr = settings.DEFAULT_FROM_EMAIL[start:end]
+        # Configure Reply-To: always extract from DEFAULT_FROM_EMAIL (verified sender)
+        reply_to_addr = _extract_email_from_sender(settings.DEFAULT_FROM_EMAIL)
         if reply_to_addr:
             msg.extra_headers = {"Reply-To": reply_to_addr}
 
@@ -128,7 +131,7 @@ def send_due_reminders(days_ahead: int = 3):
                 'invoice_number': bill.invoice_number,
                 'total_amount': f"{bill.total_amount:.0f} PKR",
                 'due_date': bill.due_date.strftime('%b %d, %Y'),
-                'support_email': settings.EMAIL_HOST_USER or settings.DEFAULT_FROM_EMAIL,
+                'support_email': _extract_email_from_sender(settings.DEFAULT_FROM_EMAIL),
             }
             subject = f"NetFlow ISP - Payment Reminder: Invoice {bill.invoice_number}"
             text_body = render_to_string('emails/due_reminder.txt', context)
@@ -136,8 +139,9 @@ def send_due_reminders(days_ahead: int = 3):
             from_email = settings.DEFAULT_FROM_EMAIL
             msg = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[to_email])
             msg.attach_alternative(html_body, 'text/html')
-            if settings.EMAIL_HOST_USER:
-                msg.extra_headers = {"Reply-To": settings.EMAIL_HOST_USER}
+            reply_to_addr = _extract_email_from_sender(settings.DEFAULT_FROM_EMAIL)
+            if reply_to_addr:
+                msg.extra_headers = {"Reply-To": reply_to_addr}
 
             try:
                 msg.send(fail_silently=False)

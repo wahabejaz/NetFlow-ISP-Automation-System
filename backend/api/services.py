@@ -311,11 +311,18 @@ def build_dashboard_summary():
 
 def run_llm_prompt(prompt, json_mode=False, api_key=None):
     settings = get_or_create_settings()
-    resolved_api_key = api_key or settings.api_key or os.environ.get("GROQ_API_KEY")
+    resolved_api_key = (
+        api_key
+        or settings.api_key
+        or os.environ.get("GROQ_API_KEY")
+        or os.environ.get("GEMINI_API_KEY")
+    )
     if not resolved_api_key:
         return None
 
     model_name = settings.ai_model if settings.ai_model else "llama-3.1-8b-instant"
+    if model_name == "gemini-1.5-flash":
+        model_name = "llama-3.1-8b-instant"
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     headers = {

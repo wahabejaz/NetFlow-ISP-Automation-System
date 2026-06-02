@@ -9,7 +9,7 @@ class SystemSettings(models.Model):
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2, default=16.00)
     late_fee = models.DecimalField(max_digits=10, decimal_places=2, default=200.00)
     billing_day = models.IntegerField(default=5)
-    ai_model = models.CharField(max_length=80, default="gemini-1.5-flash")
+    ai_model = models.CharField(max_length=80, default="llama-3.1-8b-instant")
     api_key = models.CharField(max_length=255, blank=True, default="")
     auto_prioritize = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -27,7 +27,7 @@ class SystemSettings(models.Model):
             "tax_rate": "16",
             "late_fee": "200",
             "billing_day": "5",
-            "ai_model": "gemini-1.5-flash",
+            "ai_model": "llama-3.1-8b-instant",
             "api_key": "",
             "auto_prioritize": True,
         }

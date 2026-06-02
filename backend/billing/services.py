@@ -13,12 +13,24 @@ logger = logging.getLogger(__name__)
 def send_invoice_email(bill: Bill):
     """Send invoice created email to the customer.
 
-    This function logs failures and returns True on success, False on failure.
+    This function logs failures and returns {"sent": bool, "reason": str} on all paths.
     It will not raise exceptions to callers so invoice workflows remain intact.
+    
+    Logs diagnostic info for debugging email delivery issues.
     """
     customer = getattr(bill, "customer", None)
     to_email = None
     result = {"sent": False, "reason": None}
+    
+    # Log diagnostic info about SMTP configuration (without exposing credentials)
+    logger.debug(
+        "send_invoice_email: SMTP config - host=%s, port=%s, user=%s, tls=%s",
+        settings.EMAIL_HOST,
+        getattr(settings, "EMAIL_PORT", "?"),
+        "configured" if settings.EMAIL_HOST_USER else "missing",
+        getattr(settings, "EMAIL_USE_TLS", "?"),
+    )
+    
     try:
         to_email = customer.user.email if customer and getattr(customer, 'user', None) and customer.user.email else None
         if not to_email:
@@ -28,7 +40,8 @@ def send_invoice_email(bill: Bill):
 
         if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD:
             logger.warning(
-                "Invoice %s: SMTP email credentials are missing; email not sent.",
+                "Invoice %s: SMTP email credentials are missing; email not sent. "
+                "Configure BREVO_SMTP_USER/BREVO_SMTP_PASSWORD or EMAIL_HOST_USER/EMAIL_HOST_PASSWORD.",
                 getattr(bill, 'invoice_number', ''),
             )
             result["reason"] = "SMTP email credentials are not configured on the server."
@@ -49,6 +62,7 @@ def send_invoice_email(bill: Bill):
         from_email = settings.DEFAULT_FROM_EMAIL
         msg = EmailMultiAlternatives(subject=subject, body=text_body, from_email=from_email, to=[to_email])
         msg.attach_alternative(html_body, "text/html")
+        
         # Configure Reply-To: prefer explicit SMTP user, else extract from DEFAULT_FROM_EMAIL
         reply_to_addr = None
         if settings.EMAIL_HOST_USER:
@@ -64,17 +78,34 @@ def send_invoice_email(bill: Bill):
             msg.extra_headers = {"Reply-To": reply_to_addr}
 
         try:
+            logger.info(
+                "Sending invoice %s to %s via %s",
+                bill.invoice_number,
+                to_email,
+                settings.EMAIL_HOST,
+            )
             msg.send(fail_silently=False)
-            logger.info("Invoice %s: sent to %s", bill.invoice_number, to_email)
+            logger.info("Invoice %s: successfully sent to %s", bill.invoice_number, to_email)
             result["sent"] = True
             return result
         except Exception as exc:
-            logger.exception("Failed to send invoice %s to %s", bill.invoice_number, to_email)
-            result["reason"] = str(exc)
+            logger.exception(
+                "Failed to send invoice %s to %s via SMTP host %s. Error: %s",
+                bill.invoice_number,
+                to_email,
+                settings.EMAIL_HOST,
+                type(exc).__name__,
+            )
+            result["reason"] = f"{type(exc).__name__}: {str(exc)}"
             return result
     except Exception as exc:
-        logger.exception("Unexpected error in send_invoice_email for invoice %s to %s", getattr(bill, 'invoice_number', ''), to_email)
-        result["reason"] = str(exc)
+        logger.exception(
+            "Unexpected error in send_invoice_email for invoice %s to %s: %s",
+            getattr(bill, 'invoice_number', ''),
+            to_email,
+            type(exc).__name__,
+        )
+        result["reason"] = f"Unexpected error: {type(exc).__name__}"
         return result
 
 

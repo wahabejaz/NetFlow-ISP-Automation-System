@@ -196,12 +196,31 @@ else:
     else:
         EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend"
 
-# SMTP host/port defaults favor Gmail when running in production mode but keep
-# localhost/25 for quick local development when DEBUG is enabled.
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com" if not DEBUG else "localhost")
+# SMTP configuration: supports Brevo (production) or localhost (development)
+# Priority for credentials:
+#   1. Explicit EMAIL_HOST_USER / EMAIL_HOST_PASSWORD
+#   2. Brevo-specific BREVO_SMTP_USER / BREVO_SMTP_PASSWORD
+# Brevo is the default reliable SMTP provider for production.
+# For development or Gmail, explicitly set EMAIL_HOST / EMAIL_HOST_USER / EMAIL_HOST_PASSWORD.
+
+# Determine SMTP host/user/pass with Brevo as production default
+if os.environ.get("EMAIL_HOST_USER"):
+    # Explicit EMAIL_HOST_USER means user configured Gmail or another provider
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com" if not DEBUG else "localhost")
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+elif os.environ.get("BREVO_SMTP_USER"):
+    # Brevo credentials provided: use Brevo SMTP
+    EMAIL_HOST = "smtp-relay.brevo.com"
+    EMAIL_HOST_USER = os.environ.get("BREVO_SMTP_USER")
+    EMAIL_HOST_PASSWORD = os.environ.get("BREVO_SMTP_PASSWORD", "")
+else:
+    # Fallback: localhost in dev, Brevo in production
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp-relay.brevo.com" if not DEBUG else "localhost")
+    EMAIL_HOST_USER = ""
+    EMAIL_HOST_PASSWORD = ""
+
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587" if not DEBUG else "25"))
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1" if not DEBUG else "0") == "1"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "0") == "1"
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "10"))
@@ -215,7 +234,17 @@ SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 
 if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
     print(
-        "Warning: SMTP email credentials are not configured. Invoice email delivery will fail until EMAIL_HOST_USER and EMAIL_HOST_PASSWORD are provided."
+        "⚠️  Warning: SMTP email credentials are not configured.\n"
+        "To enable invoice email delivery, configure ONE of the following:\n"
+        "  Option 1 (Brevo - recommended):\n"
+        "    • Set BREVO_SMTP_USER\n"
+        "    • Set BREVO_SMTP_PASSWORD\n"
+        "  Option 2 (Gmail or custom SMTP):\n"
+        "    • Set EMAIL_HOST (optional, defaults to smtp.gmail.com)\n"
+        "    • Set EMAIL_HOST_USER\n"
+        "    • Set EMAIL_HOST_PASSWORD\n"
+        "    • Set EMAIL_PORT (optional, defaults to 587)\n"
+        "  For Gmail: use an app-specific password, not your regular password.\n"
     )
 
 if not os.environ.get("GEMINI_API_KEY"):
